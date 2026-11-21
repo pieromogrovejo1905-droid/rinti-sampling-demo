@@ -1,0 +1,1081 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#3b47e0">
+<link rel="icon" href="img/rinti-r.png">
+</head>
+<body>
+<title>Sampling Rinti en Vivo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap">
+<style>
+/* Layout: portal → app de campo (teléfono) · dashboard cliente (grid 12 col) · modo vivo (teléfono + dashboard lado a lado) */
+:root{
+  --bg:#f3f4fb; --surface:#ffffff; --surface2:#f7f8fd; --ink:#0b1f4d; --ink2:#4a5275; --muted:#7a81a1; --line:#e1e4f3;
+  --brand:#3b47e0; --on-brand:#ffffff; --accent:#3b47e0; --accent-soft:#eceefd; --lime:#7db843;
+  --ricos:#d9433a; --ricos-soft:#fde9e7; --pawner:#0f8f7e; --pawner-soft:#ddf3ef;
+  --perro:#3b47e0; --gato:#e8971a;
+  --ok:#1d7a46; --ok-soft:#e6f4ec; --warn:#9a5800; --warn-soft:#fdf1df; --err:#b42318; --err-soft:#fdecea; --live:#e5322d;
+  --sea:#dbe8f7; --land:#f4f5fa; --road:#e3e6f2;
+  --shadow:0 10px 34px rgba(11,31,77,.10);
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --display:"Manrope","Inter",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0b1124; --surface:#141b33; --surface2:#19213d; --ink:#e8ebf8; --ink2:#b4bad3; --muted:#868daf; --line:#283152;
+  --brand:#3b47e0; --on-brand:#ffffff; --accent:#8a92ff; --accent-soft:#232b57; --lime:#93cf58;
+  --ricos:#ff6d62; --ricos-soft:#3b1e22; --pawner:#2fc6ae; --pawner-soft:#123631;
+  --perro:#8a92ff; --gato:#f5b544;
+  --ok:#55c987; --ok-soft:#14321f; --warn:#f0b04a; --warn-soft:#3a2a10; --err:#ff7a6e; --err-soft:#3d1a18; --live:#ff5a52;
+  --sea:#13254a; --land:#151d36; --road:#222b4a; --shadow:0 10px 34px rgba(0,0,0,.35); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b1124; --surface:#141b33; --surface2:#19213d; --ink:#e8ebf8; --ink2:#b4bad3; --muted:#868daf; --line:#283152;
+  --brand:#3b47e0; --on-brand:#ffffff; --accent:#8a92ff; --accent-soft:#232b57; --lime:#93cf58;
+  --ricos:#ff6d62; --ricos-soft:#3b1e22; --pawner:#2fc6ae; --pawner-soft:#123631;
+  --perro:#8a92ff; --gato:#f5b544;
+  --ok:#55c987; --ok-soft:#14321f; --warn:#f0b04a; --warn-soft:#3a2a10; --err:#ff7a6e; --err-soft:#3d1a18; --live:#ff5a52;
+  --sea:#13254a; --land:#151d36; --road:#222b4a; --shadow:0 10px 34px rgba(0,0,0,.35); color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--font);min-height:100vh}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.view{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* ---------- Portal ---------- */
+#v-portal{padding-block:28px;display:flex;flex-direction:column;align-items:center}
+.pbox{width:100%;max-width:460px;background:var(--surface);border-radius:22px;overflow:hidden;box-shadow:var(--shadow)}
+.ptop{background:var(--brand);color:var(--on-brand);padding:26px 24px 24px;position:relative;overflow:hidden}
+.ptop::before{content:"";position:absolute;right:-40px;top:-50px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.1)}
+.ptop::after{content:"";position:absolute;right:80px;bottom:-24px;width:50px;height:50px;border-radius:50%;background:var(--lime)}
+.logos{display:flex;align-items:center;gap:12px;position:relative}
+.logos .free{height:38px}.logos .r{height:42px;width:42px;border-radius:10px}.logos .sep{width:1px;height:34px;background:rgba(255,255,255,.4)}
+.kick{margin-top:18px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.85;font-weight:600;position:relative}
+.ptop h1{margin:4px 0;font-size:27px;line-height:1.1;font-weight:800;position:relative}
+.ptop p{margin:0;opacity:.92;font-size:14.5px;position:relative}
+.marcas{display:flex;gap:8px;margin-top:16px;position:relative;flex-wrap:wrap;align-items:center}
+.marcas img{height:28px;border-radius:7px;display:block}
+.pawnerw{display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:7px;background:#0b3b35;color:#fff;font:800 13px/1 var(--display);letter-spacing:.12em}
+.opts{padding:20px;display:grid;gap:12px}
+.opts h2{font-size:14px;color:var(--ink2);font-weight:600;font-family:var(--font)}
+a.op{display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;border:1px solid var(--line);border-radius:16px;padding:16px;min-height:76px;transition:border-color .15s,box-shadow .15s}
+a.op:hover,a.op:focus-visible{border-color:var(--accent);box-shadow:0 4px 16px rgba(59,71,224,.15);outline:none}
+.op .ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;flex:none;background:var(--accent-soft);color:var(--accent)}
+.op .ic svg{width:24px;height:24px}
+.op b{display:block;font-size:16.5px}.op small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+.op .go{margin-left:auto;color:var(--accent);font-size:22px;font-weight:700}
+.pnote{margin:4px 20px 20px;padding:12px 14px;border-radius:12px;background:var(--surface2);color:var(--ink2);font-size:12.5px;border:1px dashed var(--line)}
+.foot{margin-top:16px;color:var(--muted);font-size:12px;text-align:center}
+
+/* ---------- Teléfono / App de campo ---------- */
+#v-app{padding-block:20px;display:flex;justify-content:center}
+.phone{width:390px;max-width:100%;height:min(820px,calc(100vh - 40px));min-height:640px;border-radius:38px;border:10px solid #10131f;background:var(--bg);overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow);position:relative}
+@media (max-width:520px){#v-app{padding:0}#v-app .phone{width:100%;border:0;border-radius:0;height:100vh;min-height:0;box-shadow:none}}
+.abar{background:var(--brand);color:var(--on-brand);padding:14px 16px 12px;flex:none}
+.abar .row{display:flex;align-items:center;gap:10px}
+.abar .free{height:26px}.abar .r{height:28px;width:28px;border-radius:7px}
+.abar .ttl{font:700 15px/1.2 var(--display)}.abar .sub{font-size:12px;opacity:.85}
+.abar .back{background:rgba(255,255,255,.16);border:0;color:var(--on-brand);border-radius:10px;height:34px;min-width:34px;font-size:18px;display:grid;place-items:center}
+.abar .clock{margin-left:auto;font-size:12px;opacity:.9;text-align:right}
+.abody{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px;position:relative}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}
+.lbl{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+.fld{display:grid;gap:6px}
+.fld input,.fld select,.fld textarea{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:12px;font-size:16px}
+.fld textarea{min-height:76px;resize:vertical}
+.btn{border:0;border-radius:14px;padding:14px 16px;font-weight:700;font-size:15.5px;background:var(--brand);color:var(--on-brand);width:100%;min-height:50px}
+.btn.sec{background:var(--accent-soft);color:var(--accent)}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+.btn.ok{background:var(--ok);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.hint{font-size:12.5px;color:var(--ink2);background:var(--surface2);border:1px dashed var(--line);border-radius:12px;padding:10px 12px}
+.hint code{font-weight:700;color:var(--accent);font-family:ui-monospace,Menlo,monospace}
+.people{display:grid;gap:8px}
+.person{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface);text-align:left;width:100%}
+.person:hover{border-color:var(--accent)}
+.av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;flex:none;background:var(--accent-soft);color:var(--accent)}
+.person b{display:block}.person small{color:var(--muted)}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.warn{background:var(--warn-soft);color:var(--warn)}.pill.err{background:var(--err-soft);color:var(--err)}
+.pill.mut{background:var(--surface2);color:var(--muted);border:1px solid var(--line)}
+.pill.live{background:var(--err-soft);color:var(--live)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block}
+.pulse{animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 currentColor}70%{box-shadow:0 0 0 6px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.mk{display:inline-flex;align-items:center;font-size:11px;font-weight:800;letter-spacing:.04em;padding:2px 7px;border-radius:6px;text-transform:uppercase}
+.mk.ricos{background:var(--ricos-soft);color:var(--ricos)}.mk.pawner{background:var(--pawner-soft);color:var(--pawner)}
+.ring{display:flex;align-items:center;gap:16px}
+.ring svg{width:108px;height:108px;flex:none}
+.big{font:800 30px/1 var(--display)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:14px 12px;text-align:left;display:flex;flex-direction:column;gap:8px;min-height:96px}
+.tile:hover{border-color:var(--accent)}
+.tile .ti{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.tile .ti svg{width:20px;height:20px}
+.tile b{font-size:14.5px}.tile small{color:var(--muted);font-size:12px;margin-top:-6px}
+.tile.danger .ti{background:var(--err-soft);color:var(--err)}
+.sku{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.sku:last-child{border-bottom:0}
+.sku .nm b{display:block}.sku .nm small{color:var(--muted)}
+.step{display:flex;align-items:center;gap:6px}
+.step button{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);font-size:20px;font-weight:700}
+.step output{min-width:46px;text-align:center;font:800 20px/1 var(--display)}
+.quick{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}
+.quick button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-weight:600;font-size:13px}
+.photo-in{display:grid;gap:8px}
+.photo-prev{width:100%;aspect-ratio:4/3;max-width:100%;border-radius:14px;background:var(--surface2);border:1px dashed var(--line);display:grid;place-items:center;color:var(--muted);overflow:hidden;font-size:13px}
+.photo-prev img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.photo-btns label,.photo-btns button{display:grid;place-items:center;text-align:center;border-radius:12px;padding:11px 8px;font-weight:600;font-size:13.5px;border:1px solid var(--line);background:var(--surface);cursor:pointer;min-height:46px}
+.photo-btns label{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.photo-btns input{position:absolute;width:1px;height:1px;opacity:0}
+.gps{display:flex;gap:10px;align-items:center;padding:12px;border-radius:12px;background:var(--surface2);font-size:13px}
+.gps.ok{background:var(--ok-soft);color:var(--ok)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 12px;font-size:13.5px;font-weight:600}
+.chips button[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.feedmini{display:grid;gap:8px}
+.feedmini div{display:flex;gap:10px;font-size:13px;align-items:baseline}
+.feedmini time{color:var(--muted);font-size:12px;min-width:40px}
+.toast{position:absolute;left:12px;right:12px;bottom:14px;background:var(--ink);color:var(--bg);border-radius:14px;padding:12px 14px;font-size:13.5px;font-weight:600;box-shadow:var(--shadow);z-index:5;transform:translateY(140%);transition:transform .25s}
+.toast.show{transform:none}
+.bld{display:flex;gap:10px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface);text-align:left;width:100%}
+.bld b{display:block}.bld small{color:var(--muted)}
+.bld .pill{margin-left:auto}
+
+/* ---------- Dashboard ---------- */
+#v-cliente{padding-block:0}
+.dhead{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line);margin-left:calc(-1*max(16px,env(safe-area-inset-left,0px)));margin-right:calc(-1*max(16px,env(safe-area-inset-right,0px)));padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+.dhead-in{max-width:1320px;margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.dlogos{display:flex;align-items:center;gap:10px;background:var(--brand);border-radius:12px;padding:6px 10px}
+.dlogos .free{height:24px}.dlogos .r{height:26px;width:26px;border-radius:6px}.dlogos .sep{width:1px;height:22px;background:rgba(255,255,255,.4)}
+.dttl h1{font-size:18px;font-weight:800}
+.dttl small{color:var(--muted);font-size:12.5px}
+.livebox{display:flex;align-items:center;gap:8px;margin-left:auto;font-size:12.5px;color:var(--ink2)}
+.filters{display:flex;gap:8px;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface2)}
+.seg button{border:0;background:transparent;padding:7px 11px;font-size:12.5px;font-weight:600;color:var(--ink2)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--accent);box-shadow:inset 0 -2px 0 var(--accent)}
+.logout{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 10px;font-size:12.5px;font-weight:600;color:var(--ink2)}
+.dmain{max-width:1320px;margin:0 auto;padding-block:18px 40px;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+.sec{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;min-width:0}
+.sec-h{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.sec-h h2{font-size:16px;font-weight:800}
+.sec-h small{color:var(--muted);font-size:12.5px}
+.sec-h .r{margin-left:auto}
+.c12{grid-column:span 12}.c8{grid-column:span 8}.c7{grid-column:span 7}.c6{grid-column:span 6}.c5{grid-column:span 5}.c4{grid-column:span 4}
+@media (max-width:1050px){.c8,.c7,.c6,.c5,.c4{grid-column:span 12}}
+.kpis{grid-column:span 12;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+@media (max-width:1050px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis .k:first-child{grid-column:span 2}}
+.k{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.k .t{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.k .v{font:800 28px/1.05 var(--display)}
+.k .s{font-size:12.5px;color:var(--ink2)}
+.k.hero{background:var(--brand);color:var(--on-brand);border-color:transparent}
+.k.hero .t,.k.hero .s{color:rgba(255,255,255,.85)}
+.bar{height:8px;border-radius:99px;background:var(--surface2);overflow:hidden;position:relative;border:1px solid var(--line)}
+.bar i{display:block;height:100%;border-radius:99px;background:var(--accent)}
+.k.hero .bar{background:rgba(255,255,255,.2);border-color:transparent}.k.hero .bar i{background:var(--lime)}
+.bump{animation:bump .6s}
+@keyframes bump{0%{transform:scale(1)}30%{transform:scale(1.06);color:var(--lime)}100%{transform:scale(1)}}
+.field-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.fc{border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:9px;background:var(--surface);min-width:0}
+.fc-h{display:flex;gap:8px;align-items:flex-start}
+.fc-h b{display:block;font-size:14px;line-height:1.25}
+.fc-h small{color:var(--muted);font-size:12px}
+.fc-h .pill{margin-left:auto}
+.team{display:flex;flex-direction:column;gap:4px}
+.team div{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink2)}
+.team .st{margin-left:auto;font-size:11.5px;color:var(--muted)}
+.sdot{width:8px;height:8px;border-radius:50%;flex:none}
+.sdot.on{background:var(--ok)}.sdot.wait{background:var(--warn)}.sdot.off{background:var(--muted)}
+.fc-foot{display:flex;gap:10px;align-items:center}
+.fc-foot img{width:64px;height:48px;border-radius:8px;object-fit:cover;cursor:pointer;flex:none;border:1px solid var(--line)}
+.fc-foot small{color:var(--muted);font-size:12px}
+.prog{display:flex;align-items:center;gap:8px;font-size:12.5px}
+.prog .bar{flex:1}
+.map svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--ink2);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.ph{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface);text-align:left;padding:0;display:flex;flex-direction:column;min-width:0}
+.ph img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;max-width:100%}
+.ph div{padding:8px 10px;display:flex;flex-direction:column;gap:2px}
+.ph b{font-size:12.5px;line-height:1.25}
+.ph small{font-size:11.5px;color:var(--muted)}
+.ph.new{border-color:var(--live);box-shadow:0 0 0 3px var(--err-soft)}
+.ph .newtag{align-self:flex-start;background:var(--live);color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:5px;letter-spacing:.06em}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tfoot td{font-weight:800;border-top:2px solid var(--line)}
+.cbar{position:relative;height:10px;border-radius:99px;background:var(--surface2);border:1px solid var(--line);min-width:110px}
+.cbar i{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:var(--accent)}
+.cbar u{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink);opacity:.55}
+.mix{display:grid;gap:16px}
+.mixrow b{font-size:13.5px}
+.mixbar{display:flex;height:26px;border-radius:8px;overflow:hidden;margin-top:6px;position:relative}
+.mixbar span{display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700}
+.mixbar .tg{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink)}
+.mixrow small{color:var(--muted);font-size:12px}
+.curve svg{width:100%;height:auto;display:block}
+.d2d{display:grid;grid-template-columns:repeat(15,minmax(0,1fr));gap:5px}
+@media (max-width:600px){.d2d{grid-template-columns:repeat(10,minmax(0,1fr))}}
+.d2d button{aspect-ratio:1;border-radius:6px;border:0;padding:0;background:var(--surface2);outline:1px solid var(--line);max-width:100%}
+.d2d button.done{background:var(--ok)}.d2d button.today{background:var(--warn)}.d2d button.next{background:var(--accent-soft)}
+.agenda{display:grid;gap:12px}
+.ag-day h3{font-size:13px;font-weight:800;margin-bottom:6px;font-family:var(--font)}
+.ag-day h3 small{color:var(--muted);font-weight:500}
+.ag-row{display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;flex-wrap:wrap}
+.ag-row:last-child{border-bottom:0}
+.ag-row .t{color:var(--muted);font-size:12px;min-width:84px}
+.ag-row .r{margin-left:auto;color:var(--ink2);font-variant-numeric:tabular-nums}
+.dfoot{grid-column:span 12;color:var(--muted);font-size:12px;text-align:center;padding-top:6px}
+.demo-tag{display:inline-flex;align-items:center;gap:6px;background:var(--warn-soft);color:var(--warn);font-weight:700;font-size:11.5px;padding:3px 8px;border-radius:7px}
+/* Login cliente */
+.login-wrap{min-height:calc(100vh - 40px);display:grid;place-items:center;padding-block:28px}
+.login{width:100%;max-width:400px;background:var(--surface);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+.login .ptop{padding:22px}
+.login form{padding:20px;display:grid;gap:12px}
+.err{color:var(--err);font-size:13px;font-weight:600}
+/* Modal */
+.modal{position:fixed;inset:0;background:rgba(5,10,30,.6);z-index:50;display:grid;place-items:center;padding:16px}
+.mbox{background:var(--surface);border-radius:18px;max-width:760px;width:100%;max-height:92vh;overflow:auto;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}
+@media (max-width:700px){.mbox{grid-template-columns:1fr}}
+.mbox img{width:100%;height:100%;object-fit:cover;display:block;min-height:240px;max-width:100%}
+.minfo{padding:18px;display:flex;flex-direction:column;gap:10px}
+.minfo dl{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0;font-size:13px}
+.minfo dt{color:var(--muted)}.minfo dd{margin:0;font-weight:600}
+.mclose{align-self:flex-end;border:1px solid var(--line);background:var(--surface2);border-radius:10px;padding:6px 10px;font-weight:700}
+/* Modo vivo */
+#v-vivo{padding-block:0}
+.vivo{display:grid;grid-template-columns:410px minmax(0,1fr);gap:20px;max-width:1720px;margin:0 auto;padding-block:16px}
+.vivo-l{position:sticky;top:12px;align-self:start;display:flex;flex-direction:column;gap:10px;align-items:center}
+.vivo-l .phone{height:min(800px,calc(100vh - 80px))}
+.vivo-tip{max-width:390px;font-size:12.5px;color:var(--ink2);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.vivo-r{min-width:0}
+.vivo-r .dhead{position:static;margin:0;border:1px solid var(--line);border-radius:16px}
+.vivo-r .dmain{padding-top:16px}
+.vivo-top{display:flex;align-items:center;gap:10px;padding:10px 0;color:var(--ink2);font-size:13px}
+.vivo-top a{color:var(--accent);font-weight:600;text-decoration:none}
+@media (max-width:1100px){.vivo{grid-template-columns:1fr}.vivo-l{position:static}}
+.flash{animation:flash 1.4s}
+@keyframes flash{0%{box-shadow:0 0 0 0 var(--live)}20%{box-shadow:0 0 0 4px var(--err-soft)}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<!-- ============ PORTAL ============ -->
+<section id="v-portal" class="view" hidden>
+  <main class="pbox">
+    <div class="ptop">
+      <div class="logos"><img class="free" src="img/free-blanco.png" alt="Free Marketing"><span class="sep"></span><img class="r" src="img/rinti-r.png" alt="Rinti"></div>
+      <div class="kick">Rinti × Free · Dic 2026 – Feb 2027</div>
+      <h1>Sampling Masivo en Vivo</h1>
+      <p>234,400 muestras en playas, parques, transporte público y edificios, con evidencia en tiempo real.</p>
+      <div class="marcas"><img src="img/ricocan.png" alt="Ricocan"><img src="img/ricocat.png" alt="Ricocat"><span class="pawnerw">PAWNER</span></div>
+    </div>
+    <nav class="opts" aria-label="Elige cómo ingresar">
+      <h2>¿Cómo vas a ingresar?</h2>
+      <a class="op" href="#app"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg></span><span><b>Promotores</b><small>Ingreso con selfie y GPS, entregas, fotos y cierre de turno</small></span><span class="go">›</span></a>
+      <a class="op" href="#cliente"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span><span><b>Equipo Rinti</b><small>Dashboard en vivo: avance, equipo en campo y fotos</small></span><span class="go">›</span></a>
+      <a class="op" href="#vivo"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="8" height="16" rx="2"/><rect x="12" y="4" width="10" height="16" rx="2"/></svg></span><span><b>Modo presentación</b><small>App del promotor y dashboard lado a lado</small></span><span class="go">›</span></a>
+    </nav>
+    <div class="pnote"><span class="demo-tag">DEMO</span> Prototipo para la propuesta con datos simulados. La fecha simulada es el <b>sábado 16 de enero de 2027</b>, a mitad de campaña. Lo que registres en la app aparece en el dashboard al instante.</div>
+  </main>
+  <div class="foot">Free Marketing · Propuesta GR-11-30 a GR-11-42</div>
+</section>
+
+<!-- ============ APP ============ -->
+<section id="v-app" class="view" hidden><div class="slot-app"></div></section>
+
+<!-- ============ CLIENTE ============ -->
+<section id="v-cliente" class="view" hidden><div class="slot-dash"></div></section>
+
+<!-- ============ VIVO ============ -->
+<section id="v-vivo" class="view" hidden>
+  <div class="vivo">
+    <div class="vivo-l">
+      <div class="vivo-top"><a href="#inicio">‹ Inicio</a><span>App del promotor</span></div>
+      <div class="slot-app"></div>
+      <div class="vivo-tip">Prueba: entra como <b>playas / free2027</b>, elige a la promotora <b>Por ingresar</b>, marca su ingreso y registra entregas. Mira cómo cambia el dashboard.</div>
+    </div>
+    <div class="vivo-r"><div class="slot-dash"></div></div>
+  </div>
+</section>
+
+<!-- App y dashboard: nodos únicos que se mueven al slot de la vista activa -->
+<div id="phone" class="phone" hidden>
+  <div class="abar" id="abar"></div>
+  <div class="abody" id="abody"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+<div id="dash" hidden></div>
+<div id="modal" class="modal" hidden></div>
+
+<script>
+(function(){
+'use strict';
+/* ================= utilidades ================= */
+const $ = (s, r=document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => Math.round(n).toLocaleString('es-PE');
+const pct = (a,b) => b ? Math.round(a/b*100) : 0;
+function rng(seed){ let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const R = rng(20270116);
+const hash = s => { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+
+const HOY = '2027-01-16';
+const START_SEC = 11*3600 + 20*60;              // reloj simulado arranca 11:20
+const T0 = Date.now();
+const nowSec = () => START_SEC + Math.floor((Date.now() - T0) / 1000);
+const nowH = () => nowSec() / 3600;
+const hhmm = s => { s = Math.max(0, Math.round(s)); return String(Math.floor(s/3600)%24).padStart(2,'0') + ':' + String(Math.floor(s%3600/60)).padStart(2,'0'); };
+const hhmmss = s => hhmm(s) + ':' + String(s%60).padStart(2,'0');
+const D = iso => { const [y,m,d] = iso.split('-').map(Number); return new Date(Date.UTC(y, m-1, d)); };
+const ISO = dt => dt.toISOString().slice(0,10);
+const addDays = (iso, n) => { const d = D(iso); d.setUTCDate(d.getUTCDate()+n); return ISO(d); };
+const dow = iso => D(iso).getUTCDay();
+const DIAS = ['dom','lun','mar','mié','jue','vie','sáb'], DIASL = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const MES = ['ene','feb','mar','abr','may','jun','jul','ago','set','oct','nov','dic'], MESL = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','setiembre','octubre','noviembre','diciembre'];
+const fCorta = iso => { const d = D(iso); return `${DIAS[d.getUTCDay()]} ${d.getUTCDate()} ${MES[d.getUTCMonth()]}`; };
+const fLarga = iso => { const d = D(iso); return `${DIASL[d.getUTCDay()]} ${d.getUTCDate()} de ${MESL[d.getUTCMonth()]} de ${d.getUTCFullYear()}`; };
+const fNum = iso => { const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; };
+const ini = n => n.split(' ').map(w => w[0]).slice(0,2).join('');
+const DAYS = []; for (let d = '2026-12-01'; d <= '2027-02-28'; d = addDays(d,1)) DAYS.push(d);
+
+/* ================= catálogo de puntos ================= */
+const P = {
+  aguadulce:['Playa Agua Dulce','Chorrillos',-12.165,-77.030], sombrillas:['Playa Las Sombrillas','Barranco',-12.152,-77.026], yuyos:['Playa Los Yuyos','Barranco',-12.147,-77.025],
+  silencio:['Playa El Silencio','Punta Hermosa',-12.322,-76.830], rocas:['Playa Punta Rocas','Punta Negra',-12.360,-76.800], sbartolo:['Playa Norte','San Bartolo',-12.385,-76.782],
+  sinchi:['Club Zonal Sinchi Roca','Comas',-11.935,-77.050], huiracocha:['Club Zonal Huiracocha','San Juan de Lurigancho',-11.995,-77.005], huascar:['Club Zonal Huáscar','Villa El Salvador',-12.215,-76.935], cahuide:['Club Zonal Cahuide','Ate',-12.035,-76.920],
+  leyendas:['Parque de las Leyendas','San Miguel',-12.068,-77.087], circuito:['Circuito Mágico del Agua','Cercado de Lima',-12.071,-77.034],
+  kennedy:['Parque Kennedy','Miraflores',-12.121,-77.030], olivar:['Bosque El Olivar','San Isidro',-12.099,-77.036], amistad:['Parque de la Amistad','Santiago de Surco',-12.136,-76.995], reducto:['Parque Reducto','Miraflores',-12.128,-77.024], molina:['Parque Ecológico','La Molina',-12.078,-76.940], felicidad:['Parque de la Felicidad','San Borja',-12.095,-76.992], municipal:['Parque Municipal','Barranco',-12.149,-77.021],
+  l1ves:['Est. Villa El Salvador','Línea 1',-12.212,-76.940], l1ato:['Est. Atocongo','Línea 1',-12.148,-76.975], l1gam:['Est. Gamarra','Línea 1',-12.066,-77.013], l1bay:['Est. Bayóvar','Línea 1',-11.958,-76.995],
+  mnar:['Est. Naranjal','Metropolitano',-11.982,-77.060], mtv:['Est. Tomás Valle','Metropolitano',-12.010,-77.057], mdos:['Est. Dos de Mayo','Metropolitano',-12.047,-77.043], mcen:['Est. Central','Metropolitano',-12.057,-77.036], mmex:['Est. México','Metropolitano',-12.074,-77.030], mjp:['Est. Javier Prado','Metropolitano',-12.090,-77.026], mcan:['Est. Canaval y Moreyra','Metropolitano',-12.097,-77.026], mang:['Est. Angamos','Metropolitano',-12.112,-77.026], mrp:['Est. Ricardo Palma','Metropolitano',-12.119,-77.026], mben:['Est. Benavides','Metropolitano',-12.126,-77.024], mpf:['Est. Plaza de Flores','Metropolitano',-12.160,-77.018], mmat:['Est. Matellini','Metropolitano',-12.172,-77.010],
+  cr1:['Paradero La Marina','Corredor Rojo',-12.080,-77.075], cr2:['Paradero Salaverry','Corredor Rojo',-12.088,-77.050], cr3:['Paradero Petit Thouars','Corredor Rojo',-12.090,-77.033], cr4:['Paradero Aviación','Corredor Rojo',-12.089,-77.002], cr5:['Paradero Las Artes','Corredor Rojo',-12.087,-76.983], cr6:['Paradero Óvalo Monitor','Corredor Rojo',-12.083,-76.965],
+};
+// 60 edificios D2D y 6 coworkings
+const CALLES = [['Av. José Pardo','Miraflores'],['Calle Schell','Miraflores'],['Av. Del Ejército','Miraflores'],['Av. Pezet','San Isidro'],['Calle Los Laureles','San Isidro'],['Av. Javier Prado Oeste','San Isidro'],['Av. Primavera','Santiago de Surco'],['Av. El Polo','Santiago de Surco'],['Av. San Luis','San Borja'],['Av. Aviación','San Borja'],['Av. Raúl Ferrero','La Molina'],['Av. Grau','Barranco'],['Av. Brasil','Magdalena'],['Av. Salaverry','Jesús María']];
+const NOMB = ['Los Cedros','Mirador','Las Palmeras','Alameda','Torre Sol','Las Begonias','El Parque','Los Pinos','Vista Mar','Montecarlo','Altavista','Los Olivos','Bosque Real','Arenales','La Rotonda'];
+for (let i = 0; i < 60; i++) {
+  const [c, d] = CALLES[i % CALLES.length], b = P.kennedy;
+  const lat = { 'Miraflores':-12.122,'San Isidro':-12.098,'Santiago de Surco':-12.135,'San Borja':-12.100,'La Molina':-12.083,'Barranco':-12.148,'Magdalena':-12.090,'Jesús María':-12.075 }[d] + (R()-.5)*.018;
+  const lng = { 'Miraflores':-77.030,'San Isidro':-77.035,'Santiago de Surco':-76.995,'San Borja':-76.995,'La Molina':-76.945,'Barranco':-77.020,'Magdalena':-77.068,'Jesús María':-77.050 }[d] + (R()-.5)*.018;
+  P['b'+(i+1)] = [`Edif. ${NOMB[i % NOMB.length]} · ${c} ${200 + Math.floor(R()*900)}`, d, lat, lng];
+}
+const COWS = [['Coworking Las Begonias','San Isidro',-12.094,-77.031],['Oficinas Real 8','San Isidro',-12.097,-77.034],['Coworking Larco','Miraflores',-12.124,-77.029],['Torre El Pilar','San Isidro',-12.093,-77.022],['Coworking Barranco','Barranco',-12.146,-77.021],['Oficinas Chacarilla','Santiago de Surco',-12.110,-76.991]];
+COWS.forEach((c,i) => P['cw'+i] = c);
+
+/* ================= plan de campaña (cotización GR-11-30 a GR-11-42) ================= */
+const CANALES = { playas:'Playas', parques:'Parques y clubs', transporte:'Transporte público', d2d:'D2D edificios y coworking', familiar:'Experiencia familiar' };
+const SPLIT = { ricos:.60, pawner:.70 };          // % perro
+const SKU = { ricos:['Ricocan 85 g','Ricocat 85 g'], pawner:['Pawner perro 100 g','Pawner gato 70 g'] };
+const PLAN_TOTAL = 234400;
+const ACTS = [];
+let actSeq = 0;
+function act(fecha, canal, actividad, marca, puntos, personas, porPersona, shift){
+  const a = { id:'a'+(++actSeq), fecha, canal, actividad, marca, puntos, personas, porPersona, plan: personas*porPersona, shift };
+  ACTS.push(a); return a;
+}
+const weekendsJF = DAYS.filter(d => d >= '2027-01-02' && [0,6].includes(dow(d))).slice(0,16);
+weekendsJF.forEach((d,i) => {
+  act(d,'playas','Playas Lima','ricos',[['aguadulce','sombrillas','yuyos'][i%3]],2,500,[10,16]);
+  const sc = ['silencio','rocas','sbartolo'][i%3];
+  act(d,'playas','Playas Sur Chico','ricos',[sc],1,500,[10,16]);
+  act(d,'playas','Playas Sur Chico','pawner',[sc],1,500,[10,16]);
+});
+const sats = DAYS.filter(d => d >= '2026-12-05' && dow(d) === 6);
+sats.slice(0,12).forEach((d,i) => act(d,'parques','Clubs zonales','ricos',[['sinchi','huiracocha','huascar','cahuide'][i%4]],2,400,[9,14]));
+sats.slice(0,8).forEach((d,i) => act(d,'parques','Parques 7 distritos AB','pawner',[['kennedy','olivar','amistad','reducto','molina','felicidad','municipal','kennedy'][i]],2,400,[10,15]));
+['2027-01-09','2027-01-10','2027-01-16','2027-01-17','2027-01-23','2027-01-24','2027-01-30','2027-01-31'].forEach(d => {
+  const sab = dow(d) === 6, p = sab ? 'leyendas' : 'circuito', sh = sab ? [10,17] : [16,22];
+  act(d,'familiar','Experiencia familiar · módulo Ricos','ricos',[p],2,500,sh);
+  act(d,'familiar','Experiencia familiar · módulo Pawner','pawner',[p],2,500,sh);
+});
+const TR = ['2026-12-02','2026-12-03','2026-12-09','2026-12-10','2026-12-16','2026-12-17','2027-01-06','2027-01-07','2027-01-13','2027-01-14','2027-01-20','2027-01-21','2027-02-03','2027-02-04','2027-02-10','2027-02-11'];
+const TRT = ['L1','CR','MT','L1','CR','L1','CR','MT','L1','CR','MT','L1','CR','MT','L1','CR'];
+const L1 = ['l1ves','l1ato','l1gam','l1bay'], CR = ['cr1','cr2','cr3','cr4','cr5','cr6'], MT = ['mnar','mtv','mdos','mcen','mmex','mjp','mcan','mang','mrp','mben','mpf','mmat'];
+TR.forEach((d,i) => {
+  const t = TRT[i], sh = [17.5,21.5];
+  if (t === 'L1') { act(d,'transporte','Línea 1 · 4 estaciones','ricos',L1,4,500,sh); act(d,'transporte','Línea 1 · 4 estaciones','pawner',L1,4,500,sh); }
+  if (t === 'CR') { act(d,'transporte','Corredor Rojo · 6 paraderos','ricos',CR,6,500,sh); act(d,'transporte','Corredor Rojo · 6 paraderos','pawner',CR,6,500,sh); }
+  if (t === 'MT') { act(d,'transporte','Metropolitano · 12 estaciones','ricos',MT,24,500,sh); act(d,'transporte','Metropolitano corporativo · 3 estaciones','pawner',['mjp','mrp','mben'],3,500,sh); }
+});
+const d2dDays = DAYS.filter(d => d <= '2027-01-30' && dow(d) !== 0 && d !== '2026-12-25' && d !== '2027-01-01');
+const D2D = [];   // {b, fecha, ricos, pawner}
+for (let i = 0; i < 60; i++) {
+  const fecha = d2dDays[Math.floor(i * d2dDays.length / 60)];
+  const r = act(fecha,'d2d','D2D edificios','ricos',['b'+(i+1)],1,500,[9,18]);
+  const p = act(fecha,'d2d','D2D edificios','pawner',['b'+(i+1)],1,400,[9,18]);
+  D2D.push({ b:'b'+(i+1), n:i+1, fecha, ricos:r, pawner:p });
+}
+const wk = DAYS.filter(d => dow(d) >= 1 && dow(d) <= 5 && d !== '2026-12-25' && d !== '2027-01-01');
+for (let i = 0; i < 32; i++) act(wk[Math.floor(i * wk.length / 32)],'d2d','Coworking y oficinas','pawner',['cw'+(i%6)],1,75,[9,13]);
+
+/* ================= equipo ================= */
+const NOMBRES = ['Ana Quispe','Lucía Ramírez','Valeria Torres','Camila Huamán','Daniela Flores','Fiorella Castillo','Andrea Mendoza','Rosa Chávez','Milagros Vargas','Kiara Paredes','Jimena Rojas','Brenda Salazar','Sofía Cárdenas','Nicole Gutiérrez','Ximena Palacios','Diego Ramos','Kevin Soto','Luis Medina','Carlos Huertas','Joel Espinoza','Ariana Campos','Mayra Delgado','Stefany León','Giuliana Ríos','Paola Aguilar','Melany Núñez','Renzo Cáceres','Abigail Tello'];
+const nombreDe = (a, k) => NOMBRES[(hash(a.id) + k*7) % NOMBRES.length];
+
+/* ================= resultados pasados ================= */
+ACTS.forEach(a => {
+  if (a.fecha >= HOY) return;
+  const r = rng(hash(a.id));
+  const f = a.canal === 'd2d' ? 1 : .965 + r()*.035;
+  const tot = Math.round(a.plan * f), sp = SPLIT[a.marca] + (r()-.5)*.03;
+  a.perro = Math.round(tot*sp); a.gato = tot - a.perro;
+  a.fotos = a.personas*3 + 1;
+});
+
+/* ================= hoy: turnos y estado en vivo ================= */
+const TURNOS = [];   // {pid, nombre, act, punto, stock:{perro,gato}, ent:{perro,gato}, ingreso, salida, manual, entra}
+const FOTOS = [];    // {id, fecha, ts, act, punto, nombre, tipo, gen|src, marca, canal}
+const EVENTS = [];   // feed reciente para la app y animaciones
+let fotoSeq = 0;
+const hoyActs = ACTS.filter(a => a.fecha === HOY);
+const H0 = START_SEC / 3600;
+hoyActs.filter(a => a.canal !== 'd2d').forEach(a => {
+  for (let k = 0; k < a.personas; k++) {
+    const r = rng(hash(a.id + k));
+    const pid = a.id + '-' + k;
+    const st = { perro: Math.round(a.porPersona * SPLIT[a.marca]), gato: 0 }; st.gato = a.porPersona - st.perro;
+    const t = { pid, nombre: nombreDe(a,k), act:a, punto: a.puntos[k % a.puntos.length], stock: st, ent:{perro:0,gato:0}, ingreso:null, salida:null, manual:false };
+    const startS = a.shift[0]*3600;
+    const pendiente = a.actividad === 'Playas Lima' && k === 1;   // una promotora todavía sin marcar
+    if (H0 >= a.shift[0] - .25 && !pendiente) {
+      t.ingreso = startS - Math.round((2 + r()*13) * 60);
+      if (r() < .15) t.ingreso = startS + Math.round((2 + r()*6) * 60);
+      const prog = Math.min(1, Math.max(0, (START_SEC - Math.max(t.ingreso, startS)) / ((a.shift[1]-a.shift[0])*3600)));
+      const tot = Math.min(a.porPersona, Math.round(a.porPersona * prog * (.9 + r()*.18)));
+      t.ent.perro = Math.min(st.perro, Math.round(tot * SPLIT[a.marca])); t.ent.gato = Math.min(st.gato, tot - t.ent.perro);
+      addFoto({ fecha:HOY, ts: t.ingreso + 6*60 + Math.round(r()*300), t, tipo:'Stand armado' });
+      for (let s = t.ingreso + 40*60; s < START_SEC - 5*60; s += (30 + r()*25)*60) addFoto({ fecha:HOY, ts: Math.round(s), t, tipo: r() < .7 ? 'Entrega al público' : 'Material POP y volantes' });
+    }
+    TURNOS.push(t);
+  }
+});
+// Ruta D2D de hoy: un solo promotor que deja Ricos y Pawner en cada edificio
+const d2dHoy = D2D.filter(x => x.fecha === HOY);
+const D2DT = { pid:'d2d', nombre:'Jhonatan Vega', ingreso: 9*3600 - 4*60, salida:null, manual:false, edificios: d2dHoy };
+d2dHoy.forEach((x,i) => {
+  x.ricos.perro = x.ricos.gato = x.pawner.perro = x.pawner.gato = 0;
+  if (i < d2dHoy.length - 1) entregarD2D(x, 10*3600 + 40*60 + i*80*60, null, 'Jorge (conserje)');
+});
+function entregarD2D(x, ts, src, conserje, cant){
+  const c = cant || { rp:300, rg:200, pp:280, pg:120 };
+  x.ricos.perro = c.rp; x.ricos.gato = c.rg; x.pawner.perro = c.pp; x.pawner.gato = c.pg;
+  x.hora = ts; x.conserje = conserje;
+  addFoto({ fecha:HOY, ts, t:{ nombre:D2DT.nombre, act:x.ricos, punto:x.b }, tipo:'Display en edificio', src, marca:'ricos', both:true });
+}
+// fotos de los últimos días
+ACTS.filter(a => a.fecha < HOY && a.fecha >= addDays(HOY,-5)).forEach(a => {
+  const r = rng(hash(a.id+'f'));
+  const n = Math.min(3, a.personas + 1);
+  for (let k = 0; k < n; k++) addFoto({ fecha:a.fecha, ts: Math.round((a.shift[0] + (a.shift[1]-a.shift[0]) * (k+.5)/n) * 3600 + r()*900), t:{ nombre:nombreDe(a,k), act:a, punto:a.puntos[k % a.puntos.length] }, tipo: k === 0 ? (a.canal === 'd2d' ? 'Display en edificio' : 'Stand armado') : 'Entrega al público' });
+});
+function addFoto({ fecha, ts, t, tipo, src, marca, both }){
+  const a = t.act;
+  const f = { id:'f'+(++fotoSeq), fecha, ts, act:a, punto:t.punto, nombre:t.nombre, tipo, src: src || null, marca: marca || a.marca, canal:a.canal, both: !!both, nuevo: false, seed: hash(fecha + ts + t.nombre) };
+  FOTOS.push(f); return f;
+}
+
+/* ================= derivados ================= */
+function realAct(a){
+  if (a.fecha < HOY) return { perro:a.perro, gato:a.gato };
+  if (a.fecha > HOY) return { perro:0, gato:0 };
+  if (a.canal === 'd2d') return { perro:a.perro||0, gato:a.gato||0 };
+  const o = { perro:0, gato:0 };
+  TURNOS.forEach(t => { if (t.act === a) { o.perro += t.ent.perro; o.gato += t.ent.gato; } });
+  return o;
+}
+function estadoAct(a){
+  if (a.fecha < HOY) return 'Realizada';
+  if (a.fecha > HOY) return 'Programada';
+  if (a.canal === 'd2d') return (a.perro||0) > 0 ? 'Entregado' : 'En ruta';
+  const h = nowH();
+  const ts = TURNOS.filter(t => t.act === a);
+  if (ts.length && ts.every(t => t.salida)) return 'Cerrada';
+  if (h < a.shift[0] - .25) return 'Programada';
+  if (h > a.shift[1] + .25) return 'Cerrada';
+  return 'En curso';
+}
+function geo(key){ const p = P[key]; return { n:p[0], d:p[1], lat:p[2], lng:p[3] }; }
+
+/* ================= fotos simuladas (SVG) ================= */
+const BRANDC = { ricos:['#d9433a','#a52c25','RICOCAN'], pawner:['#0f8f7e','#0a5f54','PAWNER'] };
+const SKIN = ['#f1c7a3','#d9a679','#b98258','#8d5a3b','#e8b48c'];
+const CLOTH = ['#3b82f6','#f59e0b','#10b981','#6366f1','#ec4899','#64748b','#ef4444','#14b8a6'];
+const imgCache = new Map();
+function person(x, y, s, body, skin){ return `<g transform="translate(${x} ${y}) scale(${s})"><rect x="-11" y="0" width="22" height="34" rx="9" fill="${body}"/><rect x="-9" y="32" width="7" height="22" rx="3" fill="#334155"/><rect x="2" y="32" width="7" height="22" rx="3" fill="#334155"/><circle cx="0" cy="-9" r="9" fill="${skin}"/></g>`; }
+function toldo(x, y, c, c2, label){
+  let stripes = ''; for (let i = 0; i < 6; i++) stripes += `<path d="M${x+i*20} ${y} h20 l-2 18 h-16z" fill="${i%2 ? '#ffffff' : c}"/>`;
+  return `<rect x="${x+4}" y="${y}" width="4" height="86" fill="#475569"/><rect x="${x+112}" y="${y}" width="4" height="86" fill="#475569"/><path d="M${x-6} ${y} L${x+60} ${y-26} L${x+126} ${y}Z" fill="${c2}"/>${stripes}<rect x="${x+14}" y="${y+50}" width="92" height="36" rx="3" fill="${c}"/><text x="${x+60}" y="${y+73}" font-family="Arial" font-weight="900" font-size="13" fill="#fff" text-anchor="middle">${label}</text>`;
+}
+function boxes(x, y, c){ let o=''; for (let i=0;i<3;i++) o += `<rect x="${x+i*15}" y="${y-(i%2)*6}" width="13" height="16" rx="2" fill="${i%2?'#fff':c}" stroke="${c}" stroke-width="1.5"/>`; return o; }
+function feather(x, y, c){ return `<rect x="${x}" y="${y}" width="3" height="120" fill="#475569"/><path d="M${x+3} ${y} q26 10 22 60 q-6 30 -22 40z" fill="${c}"/>`; }
+function scene(f){
+  const key = f.id; if (imgCache.has(key)) return imgCache.get(key);
+  const r = rng(f.seed), [c, c2, lab] = BRANDC[f.marca], g = geo(f.punto);
+  const label = f.both ? 'RINTI' : lab;
+  let s = '';
+  const crowd = (n, y0) => { let o=''; for (let i=0;i<n;i++) o += person(30 + r()*340, y0 + r()*30, .8 + r()*.4, CLOTH[Math.floor(r()*CLOTH.length)], SKIN[Math.floor(r()*SKIN.length)]); return o; };
+  const promo = (x, y) => person(x, y, 1.1, c, SKIN[Math.floor(r()*SKIN.length)]);
+  if (f.tipo === 'Selfie de ingreso' || f.tipo === 'Selfie de salida') {
+    const sk = SKIN[Math.floor(r()*SKIN.length)];
+    s = `<rect width="400" height="300" fill="${f.canal==='playas'?'#9fd0f2':'#c9d8c0'}"/><rect y="190" width="400" height="110" fill="${f.canal==='playas'?'#e9d3a4':'#8fbf6a'}"/><ellipse cx="200" cy="330" rx="130" ry="110" fill="${c}"/><text x="200" y="285" font-family="Arial" font-weight="900" font-size="20" fill="#fff" text-anchor="middle">${label}</text><circle cx="200" cy="150" r="62" fill="${sk}"/><path d="M134 128 q66 -70 132 0 v-8 q-66 -60 -132 0z" fill="${c2}"/><rect x="128" y="118" width="144" height="16" rx="8" fill="${c}"/><circle cx="178" cy="152" r="5" fill="#1f2937"/><circle cx="222" cy="152" r="5" fill="#1f2937"/><path d="M180 180 q20 16 40 0" stroke="#7c2d12" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+  } else if (f.canal === 'playas') {
+    s = `<defs><linearGradient id="k" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fc1ee"/><stop offset="1" stop-color="#d7eefb"/></linearGradient></defs><rect width="400" height="300" fill="url(#k)"/><circle cx="${60+r()*280}" cy="40" r="18" fill="#fde68a"/><rect y="112" width="400" height="34" fill="#3b8fc6"/><path d="M0 140 Q100 130 200 142 T400 138 V300 H0Z" fill="#ead4a5"/>${toldo(140,120,c,c2,label)}${boxes(160,190,c)}${promo(120,170)}${crowd(4,180)}`;
+  } else if (f.canal === 'transporte') {
+    const bus = f.act.actividad.startsWith('Corredor') ? '#c62828' : f.act.actividad.startsWith('Línea') ? '#6b7280' : '#1e5bb8';
+    s = `<rect width="400" height="300" fill="#1e293b"/><rect y="0" width="400" height="70" fill="#334155"/><circle cx="80" cy="30" r="6" fill="#fef3c7"/><circle cx="200" cy="30" r="6" fill="#fef3c7"/><circle cx="320" cy="30" r="6" fill="#fef3c7"/><rect x="0" y="92" width="400" height="84" rx="10" fill="${bus}"/>${[0,1,2,3,4,5].map(i=>`<rect x="${14+i*64}" y="104" width="50" height="34" rx="4" fill="#bfdbfe" opacity=".85"/>`).join('')}<rect y="176" width="400" height="124" fill="#94a3b8"/><rect x="20" y="186" width="150" height="26" rx="4" fill="#0f172a"/><text x="95" y="204" font-family="Arial" font-weight="700" font-size="12" fill="#fff" text-anchor="middle">${esc(g.n.slice(0,22))}</text>${promo(250,200)}<rect x="270" y="214" width="22" height="16" rx="2" fill="#fff" stroke="${c}" stroke-width="2"/>${crowd(4,206)}`;
+  } else if (f.canal === 'd2d') {
+    s = `<rect width="400" height="300" fill="#efe6d8"/><rect y="220" width="400" height="80" fill="#c8b79e"/><rect x="250" y="120" width="130" height="100" fill="#8b6b4a"/><rect x="250" y="112" width="130" height="12" fill="#6b4f35"/><text x="315" y="175" font-family="Arial" font-size="11" fill="#f5efe6" text-anchor="middle">RECEPCIÓN</text><rect x="70" y="70" width="110" height="170" rx="6" fill="${c}"/><text x="125" y="98" font-family="Arial" font-weight="900" font-size="15" fill="#fff" text-anchor="middle">${label}</text>${[0,1,2,3].map(i=>`<rect x="82" y="${110+i*30}" width="86" height="22" rx="3" fill="#fff" opacity=".92"/><rect x="88" y="${114+i*30}" width="${30+r()*40}" height="14" rx="2" fill="${i%2?BRANDC.pawner[0]:BRANDC.ricos[0]}"/>`).join('')}${person(320,150,1.05,'#1f2937',SKIN[2])}`;
+  } else if (f.canal === 'familiar') {
+    s = `<rect width="400" height="300" fill="#a7d8f5"/><rect y="170" width="400" height="130" fill="#7fbf5f"/><circle cx="60" cy="150" r="34" fill="#4d8f3a"/><circle cx="350" cy="140" r="40" fill="#4d8f3a"/>${feather(30,60,c)}${feather(360,60,BRANDC.pawner[0])}${toldo(140,110,c,c2,label)}<rect x="60" y="200" width="70" height="56" rx="4" fill="#fff"/>${[0,1,2,3,4,5,6,7].map(i=>`<rect x="${64+(i%4)*16}" y="${204+Math.floor(i/4)*26}" width="13" height="22" rx="2" fill="${i%3?BRANDC.pawner[0]:'#fbbf24'}"/>`).join('')}${promo(270,180)}${crowd(3,200)}`;
+  } else {
+    s = `<rect width="400" height="300" fill="#b9def5"/><rect y="150" width="400" height="150" fill="#86c26b"/>${[40,110,300,365].map(x=>`<rect x="${x-4}" y="110" width="8" height="50" fill="#7c5a3a"/><circle cx="${x}" cy="100" r="${26+r()*10}" fill="#3f8a3a"/>`).join('')}${toldo(140,110,c,c2,label)}${boxes(160,180,c)}${promo(120,170)}${crowd(4,190)}`;
+  }
+  const stamp = `${fNum(f.fecha)} ${hhmm(f.ts)} · ${g.lat.toFixed(4)}, ${g.lng.toFixed(4)}`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">${s}<rect y="256" width="400" height="44" fill="#000" opacity=".55"/><text x="10" y="274" font-family="Menlo,monospace" font-size="11.5" fill="#fff">${esc(stamp)}</text><text x="10" y="291" font-family="Menlo,monospace" font-size="11" fill="#cbd5e1">${esc((g.n + ' · ' + f.nombre).slice(0,56))}</text></svg>`;
+  const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  imgCache.set(key, url); return url;
+}
+const fotoSrc = f => f.src || scene(f);
+
+/* ================= enrutado ================= */
+const VIEWS = ['inicio','app','cliente','vivo'];
+function route(){
+  let v = (location.hash || '').slice(1); if (!VIEWS.includes(v)) v = 'inicio';
+  ['portal','app','cliente','vivo'].forEach(id => $('#v-'+id).hidden = (id === 'portal' ? v !== 'inicio' : id !== v));
+  const sec = $('#v-' + (v === 'inicio' ? 'portal' : v));
+  const sa = sec.querySelector('.slot-app'), sd = sec.querySelector('.slot-dash');
+  const ph = $('#phone'), dh = $('#dash');
+  if (sa) { sa.appendChild(ph); ph.hidden = false; renderApp(); } else ph.hidden = true;
+  if (sd) { sd.appendChild(dh); dh.hidden = false; if (v === 'vivo') cli.logged = true; renderDash(true); } else dh.hidden = true;
+  window.scrollTo(0,0);
+}
+window.addEventListener('hashchange', route);
+
+/* =====================================================================
+   APP DE CAMPO
+   ===================================================================== */
+const FRENTES = {
+  playas:   { label:'Playas Lima', match: a => a.actividad === 'Playas Lima' },
+  surchico: { label:'Playas Sur Chico', match: a => a.actividad === 'Playas Sur Chico' },
+  clubs:    { label:'Clubs zonales', match: a => a.actividad === 'Clubs zonales' },
+  parques:  { label:'Parques AB · Pawner', match: a => a.actividad.startsWith('Parques') },
+  leyendas: { label:'Experiencia familiar', match: a => a.canal === 'familiar' },
+  d2d:      { label:'Ruta D2D edificios', match: a => a.canal === 'd2d' },
+  transporte:{ label:'Transporte público', match: a => a.canal === 'transporte' },
+};
+const S = { scr:'login', frente:null, t:null, draft:{}, err:'' };
+const ICON = {
+  box:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>',
+  cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+  warn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg>',
+  exit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4H5v16h5M15 8l4 4-4 4M19 12H9"/></svg>',
+  bld:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg>',
+};
+let toastT;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 3200); }
+function go(scr){ S.scr = scr; S.err = ''; renderApp(); $('#abody').scrollTop = 0; }
+function turnosFrente(){ return S.frente === 'd2d' ? [] : TURNOS.filter(t => FRENTES[S.frente].match(t.act)); }
+function totEnt(t){ return t.ent.perro + t.ent.gato; }
+
+function bar(title, sub, back){
+  return `<div class="row">${back ? `<button class="back" data-go="${back}" aria-label="Volver">‹</button>` : `<img class="free" src="img/free-blanco.png" alt="Free"><img class="r" src="img/rinti-r.png" alt="Rinti">`}<div><div class="ttl">${esc(title)}</div><div class="sub">${esc(sub)}</div></div><div class="clock num">${fCorta(HOY)}<br><b id="aclock">${hhmm(nowSec())}</b></div></div>`;
+}
+function photoInput(id, capture, label){
+  const v = S.draft[id];
+  return `<div class="photo-in"><div class="lbl">${esc(label)}</div><div class="photo-prev" id="prev-${id}">${v ? `<img src="${v}" alt="Foto tomada">` : 'Sin foto todavía'}</div>
+  <div class="photo-btns"><label>Tomar foto<input type="file" accept="image/*" capture="${capture}" data-photo="${id}"></label><button type="button" data-sample="${id}">Usar foto de ejemplo</button></div></div>`;
+}
+function renderApp(){
+  const ab = $('#abar'), bd = $('#abody');
+  const t = S.t, d2d = S.frente === 'd2d';
+  let h = '', b = '';
+  if (S.scr === 'login') {
+    b = bar('Sampling Rinti','App de promotores');
+    h = `<div class="card" style="display:grid;gap:12px"><h2 style="font-size:20px">Ingresa a tu turno</h2>
+      <form id="flogin" style="display:grid;gap:12px">
+      <div class="fld"><label class="lbl" for="lu">Usuario del frente</label><input id="lu" autocomplete="username" autocapitalize="none" placeholder="ej. playas" value="${esc(S.draft.lu||'')}"></div>
+      <div class="fld"><label class="lbl" for="lp">Clave</label><input id="lp" type="password" autocomplete="current-password" value="${esc(S.draft.lp||'')}"></div>
+      ${S.err ? `<div class="err">${esc(S.err)}</div>` : ''}
+      <button class="btn" type="submit">Entrar</button></form></div>
+      <div class="hint">Accesos de demo (clave <code>free2027</code>): <code>playas</code> · <code>surchico</code> · <code>clubs</code> · <code>parques</code> · <code>leyendas</code> · <code>d2d</code> · <code>transporte</code><br><button class="btn ghost" style="margin-top:8px;min-height:40px;padding:8px" data-demo>Rellenar con playas / free2027</button></div>`;
+  } else if (S.scr === 'pick') {
+    const F = FRENTES[S.frente];
+    b = bar(F.label, '¿Quién eres?', 'login');
+    if (d2d) {
+      h = `<div class="people"><button class="person" data-pick="d2d"><span class="av">${ini(D2DT.nombre)}</span><span><b>${esc(D2DT.nombre)}</b><small>Ruta D2D · ${d2dHoy.length} edificios hoy</small></span>${D2DT.ingreso ? `<span class="pill ok" style="margin-left:auto">En turno</span>` : ''}</button></div>`;
+    } else {
+      const ts = turnosFrente();
+      if (!ts.length) {
+        const prox = ACTS.find(a => a.fecha > HOY && F.match(a));
+        h = `<div class="card"><b>Hoy no tienes turno programado.</b><p style="margin:6px 0 0;color:var(--ink2)">Tu próxima activación: <b>${prox ? fLarga(prox.fecha) : '—'}</b>${prox ? ` · ${esc(prox.actividad)} · ${hhmm(prox.shift[0]*3600)} a ${hhmm(prox.shift[1]*3600)}` : ''}.</p></div><div class="hint">El horario de transporte es de 5:30 a 9:30 pm, para que la gente llegue a casa con la muestra.</div>`;
+      } else {
+        h = `<div class="lbl">Turno de hoy · elige tu nombre</div><div class="people">` + ts.map(x => {
+          const g = geo(x.punto);
+          const st = x.salida ? '<span class="pill mut">Cerrado</span>' : x.ingreso ? '<span class="pill ok">En turno</span>' : '<span class="pill warn">Por ingresar</span>';
+          return `<button class="person" data-pick="${x.pid}"><span class="av">${ini(x.nombre)}</span><span style="min-width:0"><b>${esc(x.nombre)}</b><small>${esc(g.n)} · <span class="mk ${x.act.marca}">${x.act.marca==='ricos'?'Ricos':'Pawner'}</span></small></span><span style="margin-left:auto">${st}</span></button>`;
+        }).join('') + `</div>`;
+      }
+    }
+  } else if (S.scr === 'ingreso') {
+    const g = geo(d2d ? (d2dHoy[0]||{b:'b1'}).b : t.punto);
+    b = bar('Marcar ingreso', d2d ? D2DT.nombre : t.nombre, 'pick');
+    h = `<div class="card" style="display:grid;gap:12px">${photoInput('selfie','user','Selfie con uniforme')}
+      <div class="gps ${S.draft.gps ? 'ok' : ''}" id="gpsbox">${S.draft.gps ? `<b>Ubicación verificada</b> · a ${S.draft.gps} m de ${esc(g.n)}` : 'Se verificará tu ubicación al confirmar'}</div>
+      <button class="btn ok" id="bIngreso" ${S.draft.selfie ? '' : 'disabled'}>Confirmar ingreso · ${hhmm(nowSec())}</button></div>
+      <div class="hint">La selfie y el GPS quedan en el dashboard de Rinti con la hora exacta de ingreso.</div>`;
+  } else if (S.scr === 'home' && d2d) {
+    b = bar('Ruta D2D', D2DT.nombre);
+    const hechos = d2dHoy.filter(x => x.hora).length;
+    h = `<div class="card"><div class="lbl">Edificios de hoy</div><div class="big num" style="margin-top:6px">${hechos} / ${d2dHoy.length}</div><small style="color:var(--muted)">Display + bolsas con el conserje · sin reposición</small></div>
+      <div class="people">${d2dHoy.map(x => `<button class="bld" data-bld="${x.b}" ${x.hora ? 'disabled' : ''}><span class="ti" style="width:34px;height:34px;display:grid;place-items:center;color:var(--accent)">${ICON.bld}</span><span style="min-width:0"><b>${esc(geo(x.b).n)}</b><small>${esc(geo(x.b).d)} · Ricos 500 + Pawner 400</small></span>${x.hora ? `<span class="pill ok">Entregado ${hhmm(x.hora)}</span>` : '<span class="pill warn">Pendiente</span>'}</button>`).join('')}</div>
+      <div class="grid2"><button class="tile danger" data-go="incidencia"><span class="ti">${ICON.warn}</span><b>Incidencia</b><small>Al supervisor</small></button><button class="tile" data-go="salida"><span class="ti">${ICON.exit}</span><b>Cerrar turno</b><small>Selfie de salida</small></button></div>`;
+  } else if (S.scr === 'home') {
+    const g = geo(t.punto), tot = totEnt(t), meta = t.act.porPersona, p = Math.min(1, tot/meta);
+    b = bar(g.n, t.nombre);
+    const C = 2*Math.PI*44;
+    const mine = EVENTS.filter(e => e.pid === t.pid).slice(-5).reverse();
+    h = `<div class="card ring"><svg viewBox="0 0 108 108"><circle cx="54" cy="54" r="44" fill="none" stroke="var(--surface2)" stroke-width="12"/><circle cx="54" cy="54" r="44" fill="none" stroke="var(--ok)" stroke-width="12" stroke-linecap="round" stroke-dasharray="${(C*p).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 54 54)"/><text x="54" y="60" text-anchor="middle" font-family="Manrope,sans-serif" font-weight="800" font-size="20" fill="var(--ink)">${pct(tot,meta)}%</text></svg>
+      <div><div class="lbl">Entregadas hoy</div><div class="big num">${fmt(tot)}<span style="font-size:16px;color:var(--muted)"> / ${fmt(meta)}</span></div><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap"><span class="mk ${t.act.marca}">${t.act.marca==='ricos'?'Ricocan · Ricocat':'Pawner'}</span>${t.salida ? '<span class="pill mut">Turno cerrado</span>' : `<span class="pill ok">Ingreso ${hhmm(t.ingreso)}</span>`}</div></div></div>
+      <div class="card"><div class="lbl">Stock en mano</div>
+        ${['perro','gato'].map((k,i) => `<div class="sku"><div class="nm"><b>${SKU[t.act.marca][i]}</b><small>Recibido ${t.stock[k]} · entregado ${t.ent[k]}</small></div><b class="num">${t.stock[k]-t.ent[k]} quedan</b></div>`).join('')}</div>
+      ${t.salida ? '' : `<div class="grid2">
+        <button class="tile" data-go="entrega"><span class="ti">${ICON.box}</span><b>Registrar entrega</b><small>Muestras + volante</small></button>
+        <button class="tile" data-go="foto"><span class="ti">${ICON.cam}</span><b>Foto de evidencia</b><small>Cada hora</small></button>
+        <button class="tile danger" data-go="incidencia"><span class="ti">${ICON.warn}</span><b>Incidencia</b><small>Al supervisor</small></button>
+        <button class="tile" data-go="salida"><span class="ti">${ICON.exit}</span><b>Cerrar turno</b><small>Saldo y selfie</small></button></div>`}
+      <div class="card"><div class="lbl" style="margin-bottom:8px">Mis registros de hoy</div><div class="feedmini">${mine.length ? mine.map(e => `<div><time>${hhmm(e.ts)}</time><span>${esc(e.txt)}</span></div>`).join('') : '<div><span style="color:var(--muted)">Aún no registras nada desde la app.</span></div>'}</div></div>`;
+  } else if (S.scr === 'entrega') {
+    b = bar('Registrar entrega', t.nombre, 'home');
+    const dr = S.draft; dr.perro = dr.perro || 0; dr.gato = dr.gato || 0;
+    h = `<div class="card">${['perro','gato'].map((k,i) => { const left = t.stock[k]-t.ent[k]; return `<div class="sku"><div class="nm"><b>${SKU[t.act.marca][i]}</b><small>${left} en mano</small></div><div class="step"><button data-st="${k}" data-d="-1" aria-label="Menos">−</button><output class="num" id="o-${k}">${dr[k]}</output><button data-st="${k}" data-d="1" aria-label="Más">+</button></div><div class="quick">${[10,25,50].map(n => `<button data-st="${k}" data-d="${n}">+${n}</button>`).join('')}</div></div>`; }).join('')}</div>
+      <div class="hint">Cada muestra va con su volante informativo. Se registra en bloques, por ejemplo cada 50 entregas.</div>
+      <button class="btn ok" id="bEntrega" ${dr.perro+dr.gato ? '' : 'disabled'}>Guardar ${dr.perro+dr.gato} entregas</button>`;
+  } else if (S.scr === 'foto') {
+    b = bar('Foto de evidencia', d2d ? D2DT.nombre : t.nombre, 'home');
+    const tipos = ['Stand armado','Entrega al público','Material POP y volantes','Exhibidor y juego'];
+    S.draft.tipo = S.draft.tipo || tipos[1];
+    h = `<div class="card" style="display:grid;gap:12px"><div class="lbl">Tipo de foto</div><div class="chips">${tipos.map(x => `<button data-tipo="${esc(x)}" aria-pressed="${S.draft.tipo===x}">${esc(x)}</button>`).join('')}</div>${photoInput('foto','environment','Foto')}</div>
+      <button class="btn ok" id="bFoto" ${S.draft.foto ? '' : 'disabled'}>Enviar foto</button>`;
+  } else if (S.scr === 'incidencia') {
+    b = bar('Incidencia', d2d ? D2DT.nombre : t.nombre, 'home');
+    const tipos = ['Falta de stock','Permiso o seguridad','Clima','Poco público','Otro'];
+    h = `<div class="card" style="display:grid;gap:12px"><div class="lbl">¿Qué pasó?</div><div class="chips">${tipos.map(x => `<button data-itipo="${esc(x)}" aria-pressed="${S.draft.itipo===x}">${esc(x)}</button>`).join('')}</div>
+      <div class="fld"><label class="lbl" for="idesc">Detalle</label><textarea id="idesc" placeholder="Cuéntale al supervisor qué necesitas">${esc(S.draft.idesc||'')}</textarea></div></div>
+      <div class="hint">Las incidencias llegan al supervisor de Free en el back office. Rinti ve el resultado en el dashboard, no el detalle.</div>
+      <button class="btn" id="bInc" ${S.draft.itipo ? '' : 'disabled'}>Enviar al supervisor</button>`;
+  } else if (S.scr === 'salida') {
+    b = bar('Cerrar turno', d2d ? D2DT.nombre : t.nombre, 'home');
+    const resumen = d2d ? `${d2dHoy.filter(x=>x.hora).length} de ${d2dHoy.length} edificios entregados` : `${fmt(totEnt(t))} entregadas · devuelve ${fmt(t.stock.perro+t.stock.gato-totEnt(t))} muestras al almacén`;
+    h = `<div class="card"><div class="lbl">Resumen del turno</div><p style="margin:6px 0 0;font-weight:600">${resumen}</p></div><div class="card">${photoInput('selfie2','user','Selfie de salida')}</div>
+      <button class="btn ok" id="bSalida" ${S.draft.selfie2 ? '' : 'disabled'}>Cerrar turno · ${hhmm(nowSec())}</button>`;
+  } else if (S.scr === 'd2dform') {
+    const x = d2dHoy.find(z => z.b === S.draft.bld), g = geo(x.b);
+    b = bar('Entrega en edificio', g.d, 'home');
+    const dr = S.draft; dr.cant = dr.cant || { rp:300, rg:200, pp:280, pg:120 };
+    h = `<div class="card"><b>${esc(g.n)}</b><small style="display:block;color:var(--muted)">${esc(g.d)}</small></div>
+      <div class="card" style="display:grid;gap:10px"><div class="fld"><label class="lbl" for="cons">Conserje que recibe</label><input id="cons" placeholder="Nombre" value="${esc(dr.cons||'')}"></div>
+      <div class="lbl">Bolsas dejadas</div>${[['rp','Ricocan 85 g'],['rg','Ricocat 85 g'],['pp','Pawner perro 100 g'],['pg','Pawner gato 70 g']].map(([k,n]) => `<div class="sku" style="padding:6px 0"><div class="nm"><b>${n}</b></div><b class="num">${dr.cant[k]}</b></div>`).join('')}</div>
+      <div class="card">${photoInput('disp','environment','Foto del display en recepción')}</div>
+      <button class="btn ok" id="bD2D" ${dr.disp && (dr.cons||'').trim() ? '' : 'disabled'}>Registrar entrega</button>`;
+  }
+  ab.innerHTML = b; bd.innerHTML = h;
+}
+// eventos de la app (delegación)
+const phone = $('#phone');
+phone.addEventListener('click', e => {
+  const el = e.target.closest('button,[data-go]'); if (!el) return;
+  const d = el.dataset;
+  if (d.go) { if (d.go === 'login') { S.frente = null; S.t = null; } S.draft = {}; go(d.go); return; }
+  if ('demo' in d) { S.draft.lu = 'playas'; S.draft.lp = 'free2027'; renderApp(); return; }
+  if (d.pick) {
+    if (d.pick === 'd2d') { S.t = null; S.draft = {}; go(D2DT.ingreso ? 'home' : 'ingreso'); return; }
+    S.t = TURNOS.find(x => x.pid === d.pick); S.t.manual = true; S.draft = {};
+    go(S.t.ingreso ? 'home' : 'ingreso'); return;
+  }
+  if (d.sample) { S.draft[d.sample] = sampleFor(d.sample); afterPhoto(); return; }
+  if (d.st) { const k = d.st, t = S.t, left = t.stock[k]-t.ent[k]; S.draft[k] = Math.max(0, Math.min(left, (S.draft[k]||0) + Number(d.d))); renderApp(); return; }
+  if (d.tipo) { S.draft.tipo = d.tipo; renderApp(); return; }
+  if (d.itipo) { S.draft.idesc = ($('#idesc')||{}).value || ''; S.draft.itipo = d.itipo; renderApp(); return; }
+  if (d.bld) { S.draft = { bld:d.bld }; go('d2dform'); return; }
+  if (el.id === 'bIngreso') return doIngreso();
+  if (el.id === 'bEntrega') return doEntrega();
+  if (el.id === 'bFoto') return doFoto();
+  if (el.id === 'bInc') return doInc();
+  if (el.id === 'bSalida') return doSalida();
+  if (el.id === 'bD2D') return doD2D();
+});
+phone.addEventListener('submit', e => {
+  e.preventDefault();
+  const u = $('#lu').value.trim().toLowerCase(), p = $('#lp').value;
+  S.draft.lu = u; S.draft.lp = p;
+  if (!FRENTES[u]) { S.err = 'Ese usuario no existe. Prueba con playas.'; renderApp(); return; }
+  if (p !== 'free2027') { S.err = 'Clave incorrecta. En la demo es free2027.'; renderApp(); return; }
+  S.frente = u; S.draft = {}; go('pick');
+});
+phone.addEventListener('input', e => { if (e.target.id === 'cons') { S.draft.cons = e.target.value; const b = $('#bD2D'); if (b) b.disabled = !(S.draft.disp && S.draft.cons.trim()); } });
+phone.addEventListener('change', e => {
+  const id = e.target.dataset.photo; if (!id || !e.target.files[0]) return;
+  const file = e.target.files[0], fr = new FileReader();
+  fr.onload = () => { const img = new Image(); img.onload = () => {
+    const sc = Math.min(1, 720 / Math.max(img.width, img.height)), cv = document.createElement('canvas');
+    cv.width = Math.round(img.width*sc); cv.height = Math.round(img.height*sc);
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    S.draft[id] = cv.toDataURL('image/jpeg', .8); afterPhoto();
+  }; img.src = fr.result; };
+  fr.readAsDataURL(file);
+});
+function afterPhoto(){
+  if (S.scr === 'ingreso' && !S.draft.gps) { S.draft.gps = 18 + Math.floor(Math.random()*40); }
+  renderApp();
+}
+function ctxActual(){ if (S.frente === 'd2d') { const x = d2dHoy.find(z => z.b === S.draft.bld) || d2dHoy[0]; return { nombre:D2DT.nombre, act:x.ricos, punto:x.b }; } return S.t; }
+function sampleFor(id){
+  const c = ctxActual();
+  const tipo = id === 'selfie' ? 'Selfie de ingreso' : id === 'selfie2' ? 'Selfie de salida' : id === 'disp' ? 'Display en edificio' : (S.draft.tipo || 'Entrega al público');
+  const f = { id:'tmp'+Math.random(), fecha:HOY, ts:nowSec(), act:c.act, punto:c.punto, nombre:c.nombre, tipo, marca: id === 'disp' ? 'ricos' : c.act.marca, canal:c.act.canal, both: id === 'disp', seed: Math.floor(Math.random()*1e9) };
+  return scene(f);
+}
+function logEv(pid, txt){ EVENTS.push({ pid, ts:nowSec(), txt }); }
+function liveFoto(tipo, src, extra){
+  const c = ctxActual();
+  const f = addFoto({ fecha:HOY, ts:nowSec(), t:c, tipo, src, ...(extra||{}) });
+  f.nuevo = true; f.vivo = Date.now();
+  return f;
+}
+function doIngreso(){
+  const now = nowSec();
+  if (S.frente === 'd2d') { D2DT.ingreso = now; logEv('d2d','Ingreso con selfie y GPS'); }
+  else { S.t.ingreso = now; logEv(S.t.pid, 'Ingreso con selfie y GPS'); }
+  liveFoto('Selfie de ingreso', S.draft.selfie);
+  S.draft = {}; go('home'); toast('Ingreso registrado. Rinti ya te ve en campo.'); pushDash('ingreso');
+}
+function doEntrega(){
+  const t = S.t, dr = S.draft;
+  t.ent.perro += dr.perro; t.ent.gato += dr.gato;
+  logEv(t.pid, `Entrega de ${dr.perro + dr.gato} muestras (${dr.perro} perro · ${dr.gato} gato)`);
+  S.draft = {}; go('home'); toast(`${dr.perro + dr.gato} entregas sumadas al dashboard.`); pushDash('entrega');
+}
+function doFoto(){
+  liveFoto(S.draft.tipo, S.draft.foto);
+  logEv(S.frente === 'd2d' ? 'd2d' : S.t.pid, 'Foto: ' + S.draft.tipo);
+  S.draft = {}; go('home'); toast('Foto enviada. Ya aparece en la galería del cliente.'); pushDash('foto');
+}
+function doInc(){
+  logEv(S.frente === 'd2d' ? 'd2d' : S.t.pid, 'Incidencia: ' + S.draft.itipo);
+  S.draft = {}; go('home'); toast('Incidencia enviada al supervisor de Free.');
+}
+function doSalida(){
+  if (S.frente === 'd2d') D2DT.salida = nowSec(); else S.t.salida = nowSec();
+  liveFoto('Selfie de salida', S.draft.selfie2);
+  logEv(S.frente === 'd2d' ? 'd2d' : S.t.pid, 'Cierre de turno');
+  S.draft = {}; go('home'); toast('Turno cerrado.'); pushDash('salida');
+}
+function doD2D(){
+  const x = d2dHoy.find(z => z.b === S.draft.bld);
+  entregarD2D(x, nowSec(), S.draft.disp, S.draft.cons.trim(), S.draft.cant);
+  const f = FOTOS[FOTOS.length-1]; f.nuevo = true; f.vivo = Date.now();
+  logEv('d2d', 'Entrega en ' + geo(x.b).n);
+  S.draft = {}; go('home'); toast('Edificio entregado. Se pintó en verde en el dashboard.'); pushDash('d2d');
+}
+
+/* =====================================================================
+   DASHBOARD CLIENTE
+   ===================================================================== */
+const cli = { logged:false, marca:'todas', periodo:'todo', err:'', galN:12 };
+const okMarca = a => cli.marca === 'todas' || a.marca === cli.marca;
+function enPeriodo(fecha){
+  if (cli.periodo === 'hoy') return fecha === HOY;
+  if (cli.periodo === 'semana') return fecha >= addDays(HOY,-6) && fecha <= HOY;
+  return true;
+}
+let lastTotal = 0;
+function renderDash(full){
+  const dh = $('#dash');
+  if (!cli.logged) {
+    dh.innerHTML = `<div class="login-wrap"><div class="login"><div class="ptop"><div class="logos"><img class="free" src="img/free-blanco.png" alt="Free Marketing"><span class="sep"></span><img class="r" src="img/rinti-r.png" alt="Rinti"></div><div class="kick">Equipo Rinti</div><h1 style="font-size:22px">Dashboard del sampling</h1></div>
+      <form id="fcli"><div class="fld"><label class="lbl" for="cu">Usuario</label><input id="cu" autocomplete="username" autocapitalize="none" placeholder="ej. rinti"></div>
+      <div class="fld"><label class="lbl" for="cp">Clave</label><input id="cp" type="password" autocomplete="current-password"></div>
+      ${cli.err ? `<div class="err">${esc(cli.err)}</div>` : ''}<button class="btn" type="submit">Entrar</button>
+      <div class="hint">Demo: usuario <code>rinti</code> · clave <code>sampling2027</code>. En la campaña real cada persona del equipo Rinti tiene su propio usuario.<br><button type="button" class="btn ghost" style="margin-top:8px;min-height:40px;padding:8px" data-clidemo>Rellenar acceso demo</button></div>
+      <a href="#inicio" style="text-align:center;color:var(--accent);font-weight:600;text-decoration:none">‹ Volver al inicio</a></form></div></div>`;
+    return;
+  }
+  if (full || !$('#d-kpis')) {
+    dh.innerHTML = `<header class="dhead"><div class="dhead-in">
+      <div class="dlogos"><img class="free" src="img/free-blanco.png" alt="Free Marketing"><span class="sep"></span><img class="r" src="img/rinti-r.png" alt="Rinti"></div>
+      <div class="dttl"><h1>Sampling Masivo · Ricocan · Ricocat · Pawner</h1><small>${fLarga(HOY)} · <span class="demo-tag">DEMO · datos simulados</span></small></div>
+      <div class="livebox"><span class="pill live"><span class="dot pulse"></span>EN VIVO</span><b class="num" id="dclock">${hhmmss(nowSec())}</b></div>
+      <div class="filters" style="width:100%">
+        <div class="seg" role="group" aria-label="Marca">${[['todas','Todas las marcas'],['ricos','Ricocan · Ricocat'],['pawner','Pawner']].map(([k,l]) => `<button data-marca="${k}" aria-pressed="${cli.marca===k}">${l}</button>`).join('')}</div>
+        <div class="seg" role="group" aria-label="Periodo">${[['hoy','Hoy'],['semana','Últimos 7 días'],['todo','Toda la campaña']].map(([k,l]) => `<button data-per="${k}" aria-pressed="${cli.periodo===k}">${l}</button>`).join('')}</div>
+        ${location.hash === '#cliente' ? '<button class="logout" data-logout style="margin-left:auto">Salir</button>' : ''}
+      </div></div></header>
+      <main class="dmain">
+        <div class="kpis" id="d-kpis"></div>
+        <section class="sec c8"><div class="sec-h"><h2>En campo ahora</h2><small>Activaciones de hoy, equipo y última evidencia</small></div><div id="d-campo"></div></section>
+        <section class="sec c4 map"><div class="sec-h"><h2>Mapa de activaciones</h2><small>Lima y Sur Chico</small></div><div id="d-mapa"></div></section>
+        <section class="sec c12"><div class="sec-h"><h2>Fotos de evidencia</h2><small>Con hora, GPS y promotor. Clic para ampliar.</small><span class="r" id="d-galc"></span></div><div id="d-gal"></div></section>
+        <section class="sec c7"><div class="sec-h"><h2>Avance por canal</h2><small>Muestras entregadas contra el plan. La raya marca lo esperado a hoy.</small></div><div id="d-canal"></div></section>
+        <section class="sec c5"><div class="sec-h"><h2>Mix por especie</h2><small>Real contra objetivo de la cotización</small></div><div id="d-mix"></div></section>
+        <section class="sec c12 curve"><div class="sec-h"><h2>Curva de la campaña</h2><small>Muestras acumuladas, real contra plan, 1 dic – 28 feb</small></div><div id="d-curva"></div></section>
+        <section class="sec c6"><div class="sec-h"><h2>D2D · 60 edificios</h2><small>Display y bolsas con el conserje, sin reposición</small></div><div id="d-d2d"></div></section>
+        <section class="sec c6"><div class="sec-h"><h2>Agenda de activaciones</h2><small>Hoy y los próximos 6 días</small></div><div id="d-agenda"></div></section>
+        <div class="dfoot">Free Marketing para Rinti · Prototipo de demostración con datos simulados</div>
+      </main>`;
+  }
+  updDash();
+}
+function updDash(){
+  if (!cli.logged || !$('#d-kpis')) return;
+  const A = ACTS.filter(okMarca);
+  const Ap = A.filter(a => enPeriodo(a.fecha) && a.fecha <= HOY);
+  let tot = 0, perro = 0, gato = 0;
+  Ap.forEach(a => { const r = realAct(a); perro += r.perro; gato += r.gato; });
+  tot = perro + gato;
+  const planCamp = A.reduce((s,a) => s + a.plan, 0);
+  const planPer = cli.periodo === 'todo' ? planCamp : Ap.reduce((s,a) => s + a.plan, 0);
+  const hoyA = A.filter(a => a.fecha === HOY);
+  let hoyTot = 0; hoyA.forEach(a => { const r = realAct(a); hoyTot += r.perro + r.gato; });
+  const turnos = TURNOS.filter(t => okMarca(t.act));
+  const incD2D = d2dHoy.length && (cli.marca === 'todas' || true);
+  const prog = turnos.length + (incD2D ? 1 : 0);
+  const enCampo = turnos.filter(t => t.ingreso && !t.salida).length + (incD2D && D2DT.ingreso && !D2DT.salida ? 1 : 0);
+  const conIng = turnos.filter(t => t.ingreso);
+  const puntuales = conIng.filter(t => t.ingreso <= t.act.shift[0]*3600 + 600).length;
+  const actsHoyVis = hoyA.filter(a => a.canal !== 'd2d');
+  const enCurso = actsHoyVis.filter(a => estadoAct(a) === 'En curso').length;
+  const fotosHoy = FOTOS.filter(f => f.fecha === HOY && (cli.marca==='todas' || f.marca===cli.marca || f.both)).length;
+  const fotosTot = Ap.filter(a => a.fecha < HOY).reduce((s,a) => s + a.fotos, 0) + (enPeriodo(HOY) ? fotosHoy : 0);
+  const bump = tot !== lastTotal && lastTotal ? 'bump' : ''; lastTotal = tot;
+  const perLbl = { hoy:'hoy', semana:'en los últimos 7 días', todo:'en toda la campaña' }[cli.periodo];
+  $('#d-kpis').innerHTML = `
+    <div class="k hero"><span class="t">Muestras entregadas ${perLbl}</span><span class="v num ${bump}">${fmt(tot)}</span><div class="bar"><i style="width:${Math.min(100,pct(tot,planPer))}%"></i></div><span class="s">${pct(tot,planPer)}% de ${fmt(planPer)} ${cli.periodo==='todo' ? 'del total de la campaña' : 'programadas'}</span></div>
+    <div class="k"><span class="t">Hoy</span><span class="v num">${fmt(hoyTot)}</span><span class="s">de ${fmt(hoyA.reduce((s,a)=>s+a.plan,0))} programadas para hoy</span></div>
+    <div class="k"><span class="t">Activaciones en curso</span><span class="v num">${enCurso} <small style="font-size:15px;color:var(--muted)">/ ${actsHoyVis.length}</small></span><span class="s">${d2dHoy.length ? `+ ruta D2D de ${d2dHoy.length} ${d2dHoy.length === 1 ? 'edificio' : 'edificios'}` : 'puntos de hoy'}</span></div>
+    <div class="k"><span class="t">Promotores en campo</span><span class="v num">${enCampo} <small style="font-size:15px;color:var(--muted)">/ ${prog}</small></span><span class="s">${pct(puntuales, conIng.length)}% llegó a tiempo</span></div>
+    <div class="k"><span class="t">Fotos de evidencia</span><span class="v num">${fmt(fotosTot)}</span><span class="s">${fotosHoy} hoy, con hora y GPS</span></div>`;
+  campo(hoyA); mapa(A); gal(); canal(A); mix(A); curva(A); d2dGrid(); agenda(A);
+}
+function campo(hoyA){
+  const h = nowH();
+  const cards = hoyA.filter(a => a.canal !== 'd2d').map(a => {
+    const ts = TURNOS.filter(t => t.act === a), r = realAct(a), tot = r.perro + r.gato;
+    const st = estadoAct(a), g = geo(a.puntos[0]);
+    const fs = FOTOS.filter(f => f.act === a && f.fecha === HOY).sort((x,y) => y.ts - x.ts);
+    const lf = fs[0];
+    const pill = st === 'En curso' ? '<span class="pill ok"><span class="dot pulse"></span>En curso</span>' : st === 'Cerrada' ? '<span class="pill mut">Cerrada</span>' : '<span class="pill mut">Programada</span>';
+    return `<div class="fc" data-fc="${a.id}"><div class="fc-h"><div style="min-width:0"><b>${esc(g.n)}</b><small>${esc(g.d)} · ${esc(a.actividad)}</small></div>${pill}</div>
+      <div style="display:flex;gap:6px;align-items:center"><span class="mk ${a.marca}">${a.marca==='ricos'?'Ricos':'Pawner'}</span><small style="color:var(--muted)">${hhmm(a.shift[0]*3600)} – ${hhmm(a.shift[1]*3600)}</small></div>
+      <div class="team">${ts.map(t => { const on = t.ingreso && !t.salida; const late = t.ingreso && t.ingreso > a.shift[0]*3600 + 600;
+        return `<div><span class="sdot ${t.salida ? 'off' : on ? 'on' : 'wait'}"></span>${esc(t.nombre)}<span class="st">${t.salida ? 'Salió ' + hhmm(t.salida) : t.ingreso ? (late ? 'Ingresó ' + hhmm(t.ingreso) + ' · tarde' : 'Ingresó ' + hhmm(t.ingreso)) : (h >= a.shift[0] ? 'Sin marcar ingreso' : 'Por ingresar')}</span></div>`; }).join('')}</div>
+      <div class="prog"><div class="bar"><i style="width:${Math.min(100,pct(tot,a.plan))}%;background:var(--${a.marca})"></i></div><b class="num">${fmt(tot)}</b><span style="color:var(--muted)">/ ${fmt(a.plan)}</span></div>
+      <div class="fc-foot">${lf ? `<img src="${fotoSrc(lf)}" alt="Última foto" data-foto="${lf.id}"><small>Última foto ${hhmm(lf.ts)}<br>${esc(lf.tipo)} · ${fs.length} hoy</small>` : '<small>Sin fotos todavía</small>'}</div></div>`;
+  });
+  if (d2dHoy.length) {
+    const hechos = d2dHoy.filter(x => x.hora);
+    cards.push(`<div class="fc"><div class="fc-h"><div><b>Ruta D2D · ${d2dHoy.length} edificios</b><small>${esc([...new Set(d2dHoy.map(x => geo(x.b).d))].join(', '))}</small></div>${D2DT.salida ? '<span class="pill mut">Cerrada</span>' : '<span class="pill ok"><span class="dot pulse"></span>En ruta</span>'}</div>
+      <div style="display:flex;gap:6px"><span class="mk ricos">Ricos</span><span class="mk pawner">Pawner</span></div>
+      <div class="team"><div><span class="sdot ${D2DT.ingreso && !D2DT.salida ? 'on' : 'off'}"></span>${esc(D2DT.nombre)}<span class="st">${D2DT.ingreso ? 'Ingresó ' + hhmm(D2DT.ingreso) : 'Sin marcar'}</span></div></div>
+      <div class="team">${d2dHoy.map(x => `<div><span class="sdot ${x.hora ? 'on' : 'wait'}"></span>${esc(geo(x.b).n.split(' · ')[0])}<span class="st">${x.hora ? 'Entregado ' + hhmm(x.hora) : 'Pendiente'}</span></div>`).join('')}</div>
+      <div class="prog"><div class="bar"><i style="width:${pct(hechos.length,d2dHoy.length)}%;background:var(--ok)"></i></div><b class="num">${hechos.length}</b><span style="color:var(--muted)">/ ${d2dHoy.length} edificios</span></div></div>`);
+  }
+  $('#d-campo').innerHTML = cards.length ? `<div class="field-grid">${cards.join('')}</div>` : '<p style="color:var(--muted)">No hay activaciones de esta marca hoy.</p>';
+}
+// mapa esquemático
+const BB = { n:-11.91, s:-12.42, w:-77.13, e:-76.74 }, MW = 380, MH = 500;
+const mx = lng => (lng - BB.w) / (BB.e - BB.w) * MW, my = lat => (BB.n - lat) / (BB.n - BB.s) * MH;
+const COAST = [[-77.13,-11.91],[-77.135,-11.98],[-77.15,-12.04],[-77.17,-12.07],[-77.12,-12.078],[-77.08,-12.093],[-77.05,-12.115],[-77.036,-12.14],[-77.03,-12.17],[-77.005,-12.20],[-76.97,-12.24],[-76.93,-12.27],[-76.88,-12.30],[-76.84,-12.32],[-76.81,-12.35],[-76.79,-12.38],[-76.775,-12.42]];
+function mapa(A){
+  const sea = 'M0 0 ' + COAST.map(([x,y]) => `L${mx(x).toFixed(1)} ${my(y).toFixed(1)}`).join(' ') + ` L0 ${MH} Z`;
+  const pts = new Map();
+  A.filter(a => a.fecha <= HOY || a.fecha <= addDays(HOY,6)).forEach(a => a.puntos.forEach(k => {
+    const prev = pts.get(k), st = a.fecha === HOY ? (a.canal === 'd2d' ? ((a.perro||0) ? 'hecho' : 'hoy') : estadoAct(a) === 'En curso' ? 'vivo' : 'hoy') : a.fecha < HOY ? 'hecho' : 'prox';
+    const rank = { vivo:3, hoy:2, prox:1, hecho:0 };
+    if (!prev || rank[st] > rank[prev.st]) pts.set(k, { k, st, marca:a.marca });
+  }));
+  const dots = [...pts.values()].sort((a,b) => ({vivo:3,hoy:2,prox:1,hecho:0}[a.st]) - ({vivo:3,hoy:2,prox:1,hecho:0}[b.st])).map(p => {
+    const g = geo(p.k), x = mx(g.lng).toFixed(1), y = my(g.lat).toFixed(1);
+    if (p.st === 'vivo') return `<g><circle cx="${x}" cy="${y}" r="13" fill="var(--live)" opacity=".18"><animate attributeName="r" values="7;15;7" dur="2s" repeatCount="indefinite"/></circle><circle cx="${x}" cy="${y}" r="6" fill="var(--live)" stroke="var(--surface)" stroke-width="2"><title>${esc(g.n)} · en curso</title></circle></g>`;
+    if (p.st === 'hoy') return `<circle cx="${x}" cy="${y}" r="5" fill="var(--warn)" stroke="var(--surface)" stroke-width="1.5"><title>${esc(g.n)} · hoy</title></circle>`;
+    if (p.st === 'prox') return `<circle cx="${x}" cy="${y}" r="3.5" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5"><title>${esc(g.n)} · próximos días</title></circle>`;
+    return `<circle cx="${x}" cy="${y}" r="3" fill="var(--accent)" opacity=".45"><title>${esc(g.n)} · realizada</title></circle>`;
+  }).join('');
+  const lab = (t, lng, lat, anchor='start') => `<text x="${mx(lng).toFixed(0)}" y="${my(lat).toFixed(0)}" font-size="10.5" fill="var(--muted)" text-anchor="${anchor}" font-family="Inter,sans-serif">${t}</text>`;
+  $('#d-mapa').innerHTML = `<svg viewBox="0 0 ${MW} ${MH}" role="img" aria-label="Mapa esquemático de puntos de activación"><rect width="${MW}" height="${MH}" fill="var(--land)"/><path d="${sea}" fill="var(--sea)"/>
+    <path d="M${mx(-77.06)} ${my(-11.95)} L${mx(-77.03)} ${my(-12.06)} L${mx(-77.026)} ${my(-12.13)} L${mx(-77.01)} ${my(-12.18)}" stroke="var(--road)" stroke-width="4" fill="none"/>
+    <path d="M${mx(-77.08)} ${my(-12.085)} L${mx(-76.95)} ${my(-12.075)}" stroke="var(--road)" stroke-width="4" fill="none"/>
+    <path d="M${mx(-76.995)} ${my(-11.955)} L${mx(-77.013)} ${my(-12.066)} L${mx(-76.975)} ${my(-12.148)} L${mx(-76.94)} ${my(-12.212)}" stroke="var(--road)" stroke-width="3" stroke-dasharray="6 4" fill="none"/>
+    ${lab('Océano Pacífico', -77.12, -12.26)}${lab('Comas', -77.045, -11.925)}${lab('S. J. de Lurigancho', -76.99, -11.985)}${lab('Miraflores', -77.06, -12.135, 'end')}${lab('La Molina', -76.93, -12.06)}${lab('Villa El Salvador', -76.92, -12.225)}${lab('Sur Chico', -76.76, -12.34, 'end')}
+    ${dots}</svg>
+    <div class="legend"><span><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="var(--live)"/></svg>En curso</span><span><svg width="12" height="12"><circle cx="6" cy="6" r="4.5" fill="var(--warn)"/></svg>Hoy</span><span><svg width="12" height="12"><circle cx="6" cy="6" r="4" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5"/></svg>Próximos 6 días</span><span><svg width="12" height="12"><circle cx="6" cy="6" r="3.5" fill="var(--accent)" opacity=".45"/></svg>Realizada</span></div>`;
+}
+function fotosVis(){
+  return FOTOS.filter(f => (cli.marca === 'todas' || f.marca === cli.marca || f.both) && enPeriodo(f.fecha) && f.fecha <= HOY)
+    .sort((a,b) => a.fecha === b.fecha ? b.ts - a.ts : (a.fecha < b.fecha ? 1 : -1));
+}
+function gal(){
+  const fs = fotosVis(), now = Date.now();
+  $('#d-galc').innerHTML = `<small style="color:var(--muted)">${fs.length} fotos recientes</small>`;
+  $('#d-gal').innerHTML = `<div class="gal">${fs.slice(0, cli.galN).map(f => { const nw = f.vivo && now - f.vivo < 20000; const g = geo(f.punto);
+    return `<button class="ph ${nw ? 'new' : ''}" data-foto="${f.id}"><img src="${fotoSrc(f)}" alt="${esc(f.tipo)} en ${esc(g.n)}" loading="lazy"><div>${nw ? '<span class="newtag">NUEVA</span>' : ''}<b>${esc(f.tipo)}</b><small>${esc(g.n)}</small><small>${f.fecha === HOY ? 'Hoy' : fCorta(f.fecha)} ${hhmm(f.ts)} · ${esc(f.nombre)}</small></div></button>`; }).join('')}</div>
+    ${fs.length > cli.galN ? `<div style="text-align:center;margin-top:12px"><button class="logout" data-more>Ver más fotos</button></div>` : ''}`;
+}
+function canal(A){
+  const rows = Object.entries(CANALES).map(([k,l]) => {
+    const as = A.filter(a => a.canal === k); if (!as.length) return '';
+    const plan = as.reduce((s,a) => s + a.plan, 0);
+    const esperado = as.filter(a => a.fecha < HOY).reduce((s,a) => s + a.plan, 0) + as.filter(a => a.fecha === HOY).reduce((s,a) => s + a.plan * Math.min(1, Math.max(0, (nowH() - a.shift[0]) / (a.shift[1] - a.shift[0]))), 0);
+    let real = 0; as.filter(a => a.fecha <= HOY).forEach(a => { const r = realAct(a); real += r.perro + r.gato; });
+    const hechas = new Set(as.filter(a => a.fecha < HOY).map(a => a.fecha + a.actividad + a.puntos[0])).size;
+    const totF = new Set(as.map(a => a.fecha + a.actividad + a.puntos[0])).size;
+    return { l, plan, real, esperado, hechas, totF };
+  }).filter(Boolean);
+  const T = rows.reduce((o,r) => ({ plan:o.plan + r.plan, real:o.real + r.real, esperado:o.esperado + r.esperado }), { plan:0, real:0, esperado:0 });
+  const cb = r => `<div class="cbar"><i style="width:${Math.min(100,pct(r.real,r.plan))}%"></i><u style="left:${Math.min(100, r.esperado / r.plan * 100).toFixed(1)}%"></u></div>`;
+  $('#d-canal').innerHTML = `<div class="tbl-wrap"><table><thead><tr><th>Canal</th><th class="n">Fechas</th><th class="n">Entregadas</th><th class="n">Plan</th><th style="min-width:130px">Avance</th><th class="n">%</th></tr></thead><tbody>
+    ${rows.map(r => `<tr><td>${r.l}</td><td class="n">${r.hechas}/${r.totF}</td><td class="n">${fmt(r.real)}</td><td class="n">${fmt(r.plan)}</td><td>${cb(r)}</td><td class="n">${pct(r.real,r.plan)}%</td></tr>`).join('')}
+    </tbody><tfoot><tr><td>Total</td><td></td><td class="n">${fmt(T.real)}</td><td class="n">${fmt(T.plan)}</td><td>${cb(T)}</td><td class="n">${pct(T.real,T.plan)}%</td></tr></tfoot></table></div>`;
+}
+function mix(A){
+  const out = ['ricos','pawner'].filter(m => cli.marca === 'todas' || cli.marca === m).map(m => {
+    let p = 0, g = 0; A.filter(a => a.marca === m && a.fecha <= HOY && enPeriodo(a.fecha)).forEach(a => { const r = realAct(a); p += r.perro; g += r.gato; });
+    const t = p + g || 1, pp = p / t * 100, obj = SPLIT[m] * 100, diff = Math.abs(pp - obj);
+    return `<div class="mixrow"><div style="display:flex;align-items:baseline;gap:8px"><b>${m === 'ricos' ? 'Ricocan · Ricocat' : 'Pawner'}</b><small>objetivo ${obj}/${100-obj}</small><span class="pill ${diff <= 3 ? 'ok' : 'warn'}" style="margin-left:auto">${diff <= 3 ? 'En rango' : 'Revisar'}</span></div>
+      <div class="mixbar" role="img" aria-label="Perro ${Math.round(pp)} por ciento, gato ${Math.round(100-pp)} por ciento"><span style="width:${pp}%;background:var(--perro)">Perro ${Math.round(pp)}%</span><span style="width:${100-pp}%;background:var(--gato)">Gato ${Math.round(100-pp)}%</span><i class="tg" style="left:${obj}%"></i></div>
+      <small>${fmt(p)} ${SKU[m][0]} · ${fmt(g)} ${SKU[m][1]}</small></div>`;
+  });
+  $('#d-mix').innerHTML = `<div class="mix">${out.join('')}</div><p style="font-size:12px;color:var(--muted);margin:14px 0 0">La raya negra marca el objetivo de la cotización. Se considera en rango con ±3 puntos.</p>`;
+}
+function curva(A){
+  const W = 900, H = 250, ml = 56, mr = 16, mt = 14, mb = 30;
+  const planD = new Map(), realD = new Map();
+  A.forEach(a => { planD.set(a.fecha, (planD.get(a.fecha)||0) + a.plan); if (a.fecha <= HOY) { const r = realAct(a); realD.set(a.fecha, (realD.get(a.fecha)||0) + r.perro + r.gato); } });
+  let cp = 0, cr = 0; const P1 = [], R1 = [];
+  DAYS.forEach((d,i) => { cp += planD.get(d)||0; P1.push([i,cp]); if (d <= HOY) { cr += realD.get(d)||0; R1.push([i,cr]); } });
+  const maxY = cp || 1, step = maxY > 150000 ? 50000 : maxY > 60000 ? 20000 : 10000;
+  const X = i => ml + i / (DAYS.length - 1) * (W - ml - mr), Y = v => mt + (1 - v / maxY) * (H - mt - mb);
+  const line = pts => pts.map(([i,v],k) => (k ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1)).join(' ');
+  const yt = []; for (let v = 0; v <= maxY; v += step) yt.push(v);
+  const mlab = [['2026-12-01','1 dic'],['2027-01-01','1 ene'],['2027-02-01','1 feb'],['2027-02-28','28 feb']];
+  const iH = DAYS.indexOf(HOY), last = R1[R1.length-1];
+  const area = line(R1) + ` L${X(last[0]).toFixed(1)} ${Y(0)} L${X(0)} ${Y(0)} Z`;
+  $('#d-curva').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Curva acumulada de muestras">
+    ${yt.map(v => `<line x1="${ml}" x2="${W-mr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${ml-8}" y="${Y(v)+4}" font-size="11" text-anchor="end" fill="var(--muted)" font-family="Inter,sans-serif">${v ? fmt(v/1000) + ' mil' : '0'}</text>`).join('')}
+    ${mlab.map(([d,l]) => `<text x="${X(DAYS.indexOf(d))}" y="${H-8}" font-size="11" text-anchor="${d==='2027-02-28'?'end':d==='2026-12-01'?'start':'middle'}" fill="var(--muted)" font-family="Inter,sans-serif">${l}</text>`).join('')}
+    <path d="${line(P1)}" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="5 4"/>
+    <path d="${area}" fill="var(--accent)" opacity=".12"/>
+    <path d="${line(R1)}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+    <line x1="${X(iH)}" x2="${X(iH)}" y1="${mt}" y2="${H-mb}" stroke="var(--live)" stroke-dasharray="3 3"/>
+    <circle cx="${X(last[0])}" cy="${Y(last[1])}" r="5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>
+    <text x="${X(iH)+8}" y="${Math.max(mt+12, Y(last[1]) - 8)}" font-size="12" font-weight="700" fill="var(--ink)" font-family="Inter,sans-serif">Hoy · ${fmt(last[1])}</text>
+    </svg><div class="legend"><span><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="var(--accent)" stroke-width="2.5"/></svg>Real</span><span><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="var(--muted)" stroke-width="2" stroke-dasharray="5 4"/></svg>Plan</span></div>`;
+}
+function d2dGrid(){
+  const done = D2D.filter(x => x.fecha < HOY || x.hora).length;
+  $('#d-d2d').innerHTML = `<div style="display:flex;gap:18px;margin-bottom:12px;flex-wrap:wrap"><div><div class="big num">${done}<span style="font-size:15px;color:var(--muted)"> / 60</span></div><small style="color:var(--muted)">edificios entregados</small></div><div><div class="big num">${fmt(done*900)}</div><small style="color:var(--muted)">muestras en edificios</small></div></div>
+    <div class="d2d">${D2D.map(x => { const c = x.fecha < HOY || x.hora ? 'done' : x.fecha === HOY ? 'today' : x.fecha <= addDays(HOY,6) ? 'next' : ''; const g = geo(x.b);
+      return `<button class="${c}" title="${esc(g.n)} · ${esc(g.d)} · ${fCorta(x.fecha)}" aria-label="Edificio ${x.n}: ${esc(g.n)}" data-bld2="${x.b}"></button>`; }).join('')}</div>
+    <div class="legend"><span><i class="sdot on"></i>Entregado</span><span><i class="sdot wait"></i>Hoy pendiente</span><span><i class="sdot" style="background:var(--accent-soft);outline:1px solid var(--line)"></i>Próximos días</span><span><i class="sdot" style="background:var(--surface2);outline:1px solid var(--line)"></i>Programado</span></div>`;
+}
+function agenda(A){
+  const days = []; for (let i = 0; i < 7; i++) days.push(addDays(HOY,i));
+  $('#d-agenda').innerHTML = `<div class="agenda">${days.map(d => {
+    const as = A.filter(a => a.fecha === d);
+    const groups = new Map();
+    as.forEach(a => { const k = a.actividad.replace(/ · módulo (Ricos|Pawner)/,'') + '|' + (a.canal === 'd2d' ? 'd2d' : a.puntos[0]); const g = groups.get(k) || { a, marcas:new Set(), plan:0, n:0 }; g.marcas.add(a.marca); g.plan += a.plan; g.n++; groups.set(k, g); });
+    const rows = [...groups.values()];
+    const d2dRows = rows.filter(g => g.a.canal === 'd2d' && g.a.actividad === 'D2D edificios');
+    const other = rows.filter(g => !(g.a.canal === 'd2d' && g.a.actividad === 'D2D edificios'));
+    let html = other.map(g => { const st = d === HOY ? estadoAct(g.a) : ''; const pt = g.a.puntos.length > 1 ? g.a.puntos.length + ' puntos en paralelo' : geo(g.a.puntos[0]).n;
+      return `<div class="ag-row"><span class="t">${hhmm(g.a.shift[0]*3600)} – ${hhmm(g.a.shift[1]*3600)}</span><span><b>${esc(g.a.actividad.replace(/ · módulo (Ricos|Pawner)/,''))}</b> · ${esc(pt)}</span>${[...g.marcas].map(m => `<span class="mk ${m}">${m==='ricos'?'Ricos':'Pawner'}</span>`).join('')}${st ? `<span class="pill ${st==='En curso'?'ok':'mut'}">${st}</span>` : ''}<span class="r">${fmt(g.plan)}</span></div>`; }).join('');
+    if (d2dRows.length) { const plan = d2dRows.reduce((s,g) => s + g.plan, 0); const nb = new Set(d2dRows.map(g => g.a.puntos[0])).size;
+      html += `<div class="ag-row"><span class="t">09:00 – 18:00</span><span><b>D2D edificios</b> · ${nb} ${nb === 1 ? 'edificio' : 'edificios'}</span>${[...new Set(d2dRows.flatMap(g => [...g.marcas]))].map(m => `<span class="mk ${m}">${m==='ricos'?'Ricos':'Pawner'}</span>`).join('')}<span class="r">${fmt(plan)}</span></div>`; }
+    return `<div class="ag-day"><h3>${d === HOY ? 'Hoy' : DIASL[dow(d)]} <small>${fCorta(d)}</small></h3>${html || '<div class="ag-row" style="color:var(--muted)">Sin activaciones</div>'}</div>`;
+  }).join('')}</div>`;
+}
+function openFoto(id){
+  const f = FOTOS.find(x => x.id === id); if (!f) return;
+  const g = geo(f.punto);
+  const m = $('#modal');
+  m.innerHTML = `<div class="mbox" role="dialog" aria-modal="true" aria-label="Foto de evidencia"><img src="${fotoSrc(f)}" alt="${esc(f.tipo)}"><div class="minfo"><button class="mclose" data-close>Cerrar ✕</button><h3 style="font-size:17px">${esc(f.tipo)}</h3>
+    <dl><dt>Punto</dt><dd>${esc(g.n)}</dd><dt>Distrito</dt><dd>${esc(g.d)}</dd><dt>Actividad</dt><dd>${esc(f.act.actividad)}</dd><dt>Marca</dt><dd>${f.both ? 'Ricos y Pawner' : f.marca === 'ricos' ? 'Ricocan · Ricocat' : 'Pawner'}</dd><dt>Promotor</dt><dd>${esc(f.nombre)}</dd><dt>Fecha y hora</dt><dd>${fNum(f.fecha)} · ${hhmm(f.ts)}</dd><dt>GPS</dt><dd class="num">${g.lat.toFixed(5)}, ${g.lng.toFixed(5)}</dd></dl>
+    <span class="pill ok" style="align-self:flex-start">Ubicación dentro de 50 m del punto</span></div></div>`;
+  m.hidden = false; m.querySelector('[data-close]').focus();
+}
+function openBld(b){
+  const x = D2D.find(z => z.b === b), g = geo(b);
+  const f = FOTOS.find(z => z.punto === b && z.tipo === 'Display en edificio');
+  if (f) return openFoto(f.id);
+  const m = $('#modal');
+  m.innerHTML = `<div class="mbox" style="grid-template-columns:1fr;max-width:420px"><div class="minfo"><button class="mclose" data-close>Cerrar ✕</button><h3 style="font-size:17px">${esc(g.n)}</h3><dl><dt>Distrito</dt><dd>${esc(g.d)}</dd><dt>Fecha</dt><dd>${fLarga(x.fecha)}</dd><dt>Estado</dt><dd>${x.fecha < HOY || x.hora ? 'Entregado' : x.fecha === HOY ? 'Pendiente hoy' : 'Programado'}</dd><dt>Muestras</dt><dd>Ricos 500 · Pawner 400</dd></dl></div></div>`;
+  m.hidden = false; m.querySelector('[data-close]').focus();
+}
+$('#modal').addEventListener('click', e => { if (e.target.id === 'modal' || e.target.closest('[data-close]')) $('#modal').hidden = true; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#modal').hidden = true; });
+$('#dash').addEventListener('click', e => {
+  const el = e.target.closest('[data-marca],[data-per],[data-foto],[data-more],[data-logout],[data-clidemo],[data-bld2]'); if (!el) return;
+  const d = el.dataset;
+  if (d.marca) { cli.marca = d.marca; renderDash(true); }
+  else if (d.per) { cli.periodo = d.per; renderDash(true); }
+  else if (d.foto) openFoto(d.foto);
+  else if (d.bld2) openBld(d.bld2);
+  else if ('more' in d) { cli.galN += 12; gal(); }
+  else if ('logout' in d) { cli.logged = false; renderDash(true); }
+  else if ('clidemo' in d) { $('#cu').value = 'rinti'; $('#cp').value = 'sampling2027'; }
+});
+$('#dash').addEventListener('submit', e => {
+  e.preventDefault();
+  const u = $('#cu').value.trim().toLowerCase(), p = $('#cp').value;
+  if (u !== 'rinti' || p !== 'sampling2027') { cli.err = 'Usuario o clave incorrectos. En la demo: rinti / sampling2027.'; renderDash(true); return; }
+  cli.err = ''; cli.logged = true; renderDash(true);
+});
+function pushDash(kind){
+  if ($('#dash').hidden || !cli.logged) return;
+  updDash();
+  const id = kind === 'foto' || kind === 'ingreso' || kind === 'salida' ? '#d-gal' : kind === 'd2d' ? '#d-d2d' : '#d-campo';
+  const el = $(id); if (el) { const s = el.closest('.sec'); s.classList.remove('flash'); void s.offsetWidth; s.classList.add('flash'); }
+}
+
+/* ================= simulación en vivo ================= */
+let tick = 0;
+setInterval(() => {
+  tick++;
+  const s = nowSec(), h = s / 3600;
+  const act = TURNOS.filter(t => t.ingreso && !t.salida && !t.manual && h >= t.act.shift[0] && h <= t.act.shift[1]);
+  for (let i = 0; i < 2 && act.length; i++) {
+    const t = act[Math.floor(Math.random()*act.length)], n = 3 + Math.floor(Math.random()*10);
+    const p = Math.round(n * SPLIT[t.act.marca] + (Math.random()-.5));
+    t.ent.perro = Math.min(t.stock.perro, t.ent.perro + p); t.ent.gato = Math.min(t.stock.gato, t.ent.gato + (n - p));
+  }
+  if (tick % 9 === 0 && act.length) {
+    const t = act[Math.floor(Math.random()*act.length)];
+    const f = addFoto({ fecha:HOY, ts:s, t, tipo: Math.random() < .75 ? 'Entrega al público' : 'Material POP y volantes' });
+    f.vivo = Date.now();
+  }
+  const c1 = $('#aclock'); if (c1) c1.textContent = hhmm(s);
+  const c2 = $('#dclock'); if (c2) c2.textContent = hhmmss(s);
+  if (!$('#dash').hidden && cli.logged && $('#modal').hidden) updDash();
+}, 2500);
+setInterval(() => { const c2 = $('#dclock'); if (c2) c2.textContent = hhmmss(nowSec()); }, 1000);
+
+route();
+})();
+</script>
+
+</body>
+</html>
